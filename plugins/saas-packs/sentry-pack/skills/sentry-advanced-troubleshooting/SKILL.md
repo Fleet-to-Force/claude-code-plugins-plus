@@ -11,6 +11,7 @@ allowed-tools: "Read, Write, Edit, Grep, Bash(cmd:*)"
 version: 1.0.0
 license: MIT
 author: "Jeremy Longshore <jeremy@intentsolutions.io>"
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Sentry Advanced Troubleshooting

@@ -10,6 +10,7 @@ allowed-tools: Read, Write, Edit, Bash(sentry-cli:*), Grep
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Sentry Deploy Integration

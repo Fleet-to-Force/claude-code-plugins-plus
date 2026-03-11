@@ -5,6 +5,7 @@ version: 1.0.0
 allowed-tools: "Read, Bash(monitoring:*), Bash(metrics:*), Bash(logs:*), Grep, Glob"
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 # Error Rate Monitor
 

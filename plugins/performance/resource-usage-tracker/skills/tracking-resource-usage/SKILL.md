@@ -5,6 +5,7 @@ version: 1.0.0
 allowed-tools: "Read, Bash(top:*), Bash(ps:*), Bash(vmstat:*), Bash(iostat:*), Grep, Glob"
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 # Resource Usage Tracker
 

@@ -61,7 +61,7 @@ ENTERPRISE_REQUIRED = {'allowed-tools', 'version', 'author', 'license'}
 REQUIRED_FIELDS = ANTHROPIC_REQUIRED | ENTERPRISE_REQUIRED
 
 # Optional fields per Anthropic spec
-OPTIONAL_FIELDS = {'model', 'disable-model-invocation', 'mode', 'tags', 'metadata'}
+OPTIONAL_FIELDS = {'model', 'disable-model-invocation', 'mode', 'tags', 'metadata', 'compatible-with'}
 
 # Deprecated fields (warn but don't error)
 DEPRECATED_FIELDS = {'when_to_use'}
@@ -1047,6 +1047,24 @@ def validate_frontmatter(path: Path, fm: dict) -> Tuple[List[str], List[str]]:
             errors.append(f"[frontmatter] 'tags' must be array of strings, got: {type(tags).__name__}")
         elif not all(isinstance(t, str) for t in tags):
             errors.append("[frontmatter] 'tags' must contain only strings")
+
+    # === COMPATIBLE-WITH FIELD ===
+    VALID_PLATFORMS = {'claude-code', 'codex', 'openclaw', 'aider', 'continue', 'cursor', 'windsurf'}
+
+    if 'compatible-with' in fm:
+        compat = fm['compatible-with']
+        if isinstance(compat, str):
+            # CSV string
+            platforms = [p.strip().lower() for p in compat.split(',')]
+        elif isinstance(compat, list):
+            platforms = [str(p).strip().lower() for p in compat]
+        else:
+            errors.append(f"[frontmatter] 'compatible-with' must be CSV string or array, got: {type(compat).__name__}")
+            platforms = []
+
+        for p in platforms:
+            if p and p not in VALID_PLATFORMS:
+                warnings.append(f"[frontmatter] 'compatible-with' unknown platform: '{p}' (known: {', '.join(sorted(VALID_PLATFORMS))})")
 
     # === DEPRECATED FIELDS ===
 

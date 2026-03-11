@@ -10,6 +10,7 @@ allowed-tools: Read, Write, Edit, Bash(pip:*), Bash(databricks:*), Bash(dbx:*), 
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Databricks Local Dev Loop

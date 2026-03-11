@@ -8,6 +8,7 @@ allowed-tools: Read, Write, Edit, Bash(jq:*), Bash(cat:*)
 version: 1.4.1
 license: MIT
 author: Bayram Annakov <bayram.annakov@gmail.com>
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Claude Reflect - Self-Learning System

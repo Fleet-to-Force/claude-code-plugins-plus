@@ -98,6 +98,7 @@ const skills = skillsData.skills.map(skill => ({
   description: skill.description || '',
   category: skill.parentPlugin.category,
   allowedTools: skill.allowedTools || [],
+  compatibleWith: skill.compatibleWith || [],
   version: skill.version,
   // Link to parent plugin
   parentPlugin: {
@@ -106,7 +107,7 @@ const skills = skillsData.skills.map(skill => ({
     category: skill.parentPlugin.category
   },
   // Search-specific fields
-  searchText: `${skill.name} ${skill.description || ''} ${skill.parentPlugin.category} ${(skill.allowedTools || []).join(' ')}`.toLowerCase()
+  searchText: `${skill.name} ${skill.description || ''} ${skill.parentPlugin.category} ${(skill.allowedTools || []).join(' ')} ${(skill.compatibleWith || []).join(' ')}`.toLowerCase()
 }));
 
 // Combine into unified index

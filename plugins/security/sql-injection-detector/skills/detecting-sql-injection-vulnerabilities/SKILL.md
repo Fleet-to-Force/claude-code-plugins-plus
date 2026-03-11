@@ -9,6 +9,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash(code-scan:*), Bash(security-t
 version: 1.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Detecting Sql Injection Vulnerabilities

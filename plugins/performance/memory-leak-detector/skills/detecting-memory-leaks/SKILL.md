@@ -5,6 +5,7 @@ version: 1.0.0
 allowed-tools: "Read, Write, Edit, Grep, Glob, Bash(profiling:*), Bash(memory:*)"
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 # Memory Leak Detector
 

@@ -10,6 +10,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash(cmd:*)
 version: 1.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 # Environment Config Manager
 

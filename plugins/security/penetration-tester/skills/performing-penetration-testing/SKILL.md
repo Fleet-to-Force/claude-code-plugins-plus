@@ -10,6 +10,7 @@ version: 2.0.0
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash(python3:*), Bash(pip:*), Bash(npm:*), Bash(bandit:*)
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Penetration Testing Skill

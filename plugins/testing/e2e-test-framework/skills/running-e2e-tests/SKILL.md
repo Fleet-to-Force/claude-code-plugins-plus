@@ -9,6 +9,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash(test:e2e-*)
 version: 1.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 # E2E Test Framework
 

@@ -8,6 +8,7 @@ version: 1.0.0
 author: Rowan Brooks <rowanbrooks100@github.com>
 license: MIT
 allowed-tools: Read, Write, Edit, Glob, Grep
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Brand Strategy Framework

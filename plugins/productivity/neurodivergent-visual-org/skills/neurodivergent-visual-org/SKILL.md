@@ -10,6 +10,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 version: 3.1.1
 author: Jack Reis <hello@jack.digital>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 ## Mode System (v3.1.1)

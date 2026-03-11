@@ -10,6 +10,7 @@ allowed-tools: Read, Grep, Bash(curl:*), Bash(lokalise2:*)
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Lokalise Incident Runbook

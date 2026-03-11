@@ -5,6 +5,7 @@ allowed-tools: Read, Glob, Grep
 license: MIT
 author: Wondel.ai <https://github.com/wondelai>
 version: 1.0.1
+compatible-with: claude-code, codex, openclaw
 ---
 
 # The 1-Page Marketing Plan Framework

@@ -5,6 +5,7 @@ version: 1.0.0
 allowed-tools: "Read, Write, Edit, Grep, Glob, Bash(metrics:*), Bash(monitoring:*), Bash(system:*)"
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 # Infrastructure Metrics Collector
 

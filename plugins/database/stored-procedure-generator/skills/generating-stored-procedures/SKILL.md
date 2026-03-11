@@ -10,6 +10,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash(psql:*), Bash(mysql:*), Bash(
 version: 2.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Stored Procedure Generator

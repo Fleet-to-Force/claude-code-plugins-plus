@@ -6,6 +6,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash(general:*), Bash(util:*)
 version: 1.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Vertex Ai Media Master

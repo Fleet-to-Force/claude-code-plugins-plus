@@ -5,6 +5,7 @@ allowed-tools: "Read, Write, Edit, Grep, Glob, Bash(git:*), Bash(gh:*), Bash(pyt
 version: "0.1.0"
 author: "Mattyp <mattyp@claudecodeplugins.io>"
 license: "MIT"
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Changelog Orchestrator

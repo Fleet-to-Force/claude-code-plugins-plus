@@ -9,6 +9,7 @@ allowed-tools: WebSearch, Read, Write
 version: 1.0.0
 author: Claude Code Plugins <plugins@claudecodeplugins.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 # YouTube Outline

@@ -10,6 +10,7 @@ allowed-tools: Read, Write, Edit, Bash(system_profiler:*), Bash(log:*), Bash(sw_
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Granola Debug Bundle

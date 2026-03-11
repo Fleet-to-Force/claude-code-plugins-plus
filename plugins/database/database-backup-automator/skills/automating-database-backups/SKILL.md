@@ -9,6 +9,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash(pg_dump:*), Bash(mysqldump:*)
 version: 2.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Database Backup Automation

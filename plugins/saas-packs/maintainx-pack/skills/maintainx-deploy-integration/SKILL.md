@@ -10,6 +10,7 @@ allowed-tools: Read, Write, Edit, Bash(npm:*), Bash(docker:*), Bash(kubectl:*)
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 
 # MaintainX Deploy Integration

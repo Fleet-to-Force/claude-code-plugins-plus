@@ -10,6 +10,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash(python:*bridge_monitor*)
 version: 1.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Cross-Chain Bridge Monitor

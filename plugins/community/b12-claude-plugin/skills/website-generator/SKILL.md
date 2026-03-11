@@ -8,6 +8,7 @@ allowed-tools: AskUserQuestion
 version: 1.0.0
 author: B12.io <https://github.com/b12io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Website Generator Skill

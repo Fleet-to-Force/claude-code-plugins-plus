@@ -9,6 +9,7 @@ allowed-tools: Read, Write, Edit, Bash(curl:*), Bash(npm:*), Grep
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Guidewire Core Workflow B: Claims Processing

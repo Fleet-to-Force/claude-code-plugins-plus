@@ -6,6 +6,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash(terraform:*), Bash(aws:*), Ba
 version: 1.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 # Infrastructure As Code Generator
 

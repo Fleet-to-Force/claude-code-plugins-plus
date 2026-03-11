@@ -10,6 +10,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash(tar:*), Bash(rsync:*), Bash(a
 version: 1.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 # Backup Strategy Implementor
 

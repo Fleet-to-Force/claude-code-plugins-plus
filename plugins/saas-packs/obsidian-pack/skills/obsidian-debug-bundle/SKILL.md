@@ -10,6 +10,7 @@ allowed-tools: Read, Bash(grep:*), Bash(tar:*), Grep, Write
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Obsidian Debug Bundle

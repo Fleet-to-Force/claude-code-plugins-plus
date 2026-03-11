@@ -5,6 +5,7 @@ version: 1.0.0
 allowed-tools: "Read, Write, Bash(logs:*), Bash(grep:*), Bash(awk:*), Grep"
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 # Log Analysis Tool
 

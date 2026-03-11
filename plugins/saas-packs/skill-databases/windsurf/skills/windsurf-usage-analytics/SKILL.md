@@ -8,6 +8,7 @@ allowed-tools: Read,Grep,Glob
 version: 1.0.0
 license: MIT
 author: "Jeremy Longshore <jeremy@intentsolutions.io>"
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Windsurf Usage Analytics

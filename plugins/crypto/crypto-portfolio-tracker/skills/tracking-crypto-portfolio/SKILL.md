@@ -9,6 +9,7 @@ allowed-tools: Read, Write, Bash(crypto:portfolio-*)
 version: 2.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Tracking Crypto Portfolio

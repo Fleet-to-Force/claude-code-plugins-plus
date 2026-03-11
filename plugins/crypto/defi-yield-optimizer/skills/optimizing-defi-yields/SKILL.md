@@ -9,6 +9,7 @@ allowed-tools: Read, Write, Bash(crypto:yield-*)
 version: 2.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Optimizing DeFi Yields

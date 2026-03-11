@@ -74,9 +74,25 @@ function parseFrontmatter(content) {
         currentValue = '';
       }
     } else if (inMultiline) {
-      // Append to multiline value
-      if (trimmed && !trimmed.startsWith('-')) {
-        currentValue += (currentValue ? ' ' : '') + trimmed;
+      // Check if this line is a new top-level key (not indented, has colon)
+      // YAML block scalars end when a line appears at the original indentation level
+      const isIndented = line.startsWith(' ') || line.startsWith('\t');
+      if (!isIndented && colonIndex > 0) {
+        // End multiline, save current value, process as new key
+        if (currentKey && currentValue) {
+          metadata[currentKey] = currentValue.trim();
+        }
+        inMultiline = false;
+        currentKey = trimmed.substring(0, colonIndex).trim();
+        const value = trimmed.substring(colonIndex + 1).trim();
+        if (value === '|') {
+          inMultiline = true;
+          currentValue = '';
+        } else if (value) {
+          currentValue = value;
+        } else {
+          currentValue = '';
+        }
       } else if (trimmed.startsWith('-')) {
         // End of multiline, start of list
         if (currentKey && currentValue) {
@@ -85,6 +101,9 @@ function parseFrontmatter(content) {
         inMultiline = false;
         currentKey = 'allowed-tools';
         metadata[currentKey] = [trimmed.substring(1).trim()];
+      } else {
+        // Append to multiline value
+        currentValue += (currentValue ? ' ' : '') + trimmed;
       }
     }
   }
@@ -248,11 +267,21 @@ function processSkillFile(filePath) {
         : authorStr.name;
     }
 
+    // Parse compatible-with field
+    let compatibleWith = frontmatter['compatible-with'] || [];
+    if (typeof compatibleWith === 'string') {
+      compatibleWith = compatibleWith.split(',').map(p => p.trim().toLowerCase());
+    }
+    if (!Array.isArray(compatibleWith)) {
+      compatibleWith = [];
+    }
+
     return {
       slug,
       name: frontmatter.name || 'Unnamed Skill',
       description: frontmatter.description || '',
       allowedTools,
+      compatibleWith,
       version: frontmatter.version || '1.0.0',
       author: authorStr,
       license: frontmatter.license || 'MIT',

@@ -6,6 +6,7 @@ allowed-tools: Read, WebFetch, WebSearch, Grep, Bash(diff:*), Bash(grep:*)
 version: 1.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 # 000 Jeremy Content Consistency Validator

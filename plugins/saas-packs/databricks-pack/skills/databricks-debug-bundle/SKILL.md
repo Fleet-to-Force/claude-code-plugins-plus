@@ -10,6 +10,7 @@ allowed-tools: Read, Bash(databricks:*), Bash(tar:*), Grep
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Databricks Debug Bundle

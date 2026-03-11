@@ -9,6 +9,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash(api:ratelimit-*)
 version: 1.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Rate Limiting Apis

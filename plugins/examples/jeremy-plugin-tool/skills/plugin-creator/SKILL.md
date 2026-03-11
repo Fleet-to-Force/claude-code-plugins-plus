@@ -6,6 +6,7 @@ allowed-tools: Write, Read, Grep, Bash(cmd:*)
 version: 1.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Plugin Creator

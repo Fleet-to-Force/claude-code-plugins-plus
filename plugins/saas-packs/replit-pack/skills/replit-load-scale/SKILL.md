@@ -10,6 +10,7 @@ allowed-tools: Read, Write, Edit, Bash(k6:*), Bash(kubectl:*)
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Replit Load & Scale

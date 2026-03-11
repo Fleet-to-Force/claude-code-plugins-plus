@@ -9,6 +9,7 @@ allowed-tools: Read, Bash(python:*), Grep, Glob
 version: 1.0.0
 author: Jeremy Longshore <jeremy@intentsolutions.io>
 license: MIT
+compatible-with: claude-code, codex, openclaw
 ---
 
 # Detecting Data Anomalies
