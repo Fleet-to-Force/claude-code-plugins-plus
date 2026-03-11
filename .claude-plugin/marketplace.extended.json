@@ -19,7 +19,7 @@
       "name": "000-jeremy-content-consistency-validator",
       "source": "./plugins/productivity/000-jeremy-content-consistency-validator",
       "description": "Read-only validator that generates comprehensive discrepancy reports comparing messaging consistency across ANY HTML-based website (WordPress, Hugo, Next.js, React, Vue, static HTML, etc.), GitHub repositories, and local documentation. Detects mixed messaging without making changes.",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "productivity",
       "keywords": [
         "documentation",
@@ -54,7 +54,7 @@
       "name": "002-jeremy-yaml-master-agent",
       "source": "./plugins/productivity/002-jeremy-yaml-master-agent",
       "description": "Intelligent YAML validation, generation, and transformation agent with schema inference, linting, and format conversion capabilities",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "productivity",
       "keywords": [
         "yaml",
@@ -79,7 +79,7 @@
       "name": "003-jeremy-vertex-ai-media-master",
       "source": "./plugins/productivity/003-jeremy-vertex-ai-media-master",
       "description": "Comprehensive Google Vertex AI multimodal mastery for Jeremy - video processing (6+ hours), audio generation, image creation with Gemini 2.0/2.5 and Imagen 4. Marketing campaign automation, content generation, and media asset production.",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "productivity",
       "keywords": [
         "vertex-ai",
@@ -108,7 +108,7 @@
       "name": "004-jeremy-google-cloud-agent-sdk",
       "source": "./plugins/productivity/004-jeremy-google-cloud-agent-sdk",
       "description": "Google Cloud Agent Development Kit (ADK) and Agent Starter Pack mastery - build containerized multi-agent systems with production-ready templates, deploy to Cloud Run/GKE/Agent Engine, RAG agents, ReAct agents, and multi-agent orchestration.",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "productivity",
       "keywords": [
         "agent-development-kit",
@@ -4112,7 +4112,7 @@
       "name": "jeremy-firestore",
       "source": "./plugins/community/jeremy-firestore",
       "description": "Firestore database specialist for schema design, queries, and real-time sync",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "database",
       "keywords": [
         "firebase",
@@ -4660,7 +4660,7 @@
       "name": "jeremy-genkit-pro",
       "source": "./plugins/ai-ml/jeremy-genkit-pro",
       "description": "Firebase Genkit expert for production-ready AI workflows with RAG and tool calling",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "ai-ml",
       "keywords": [
         "firebase",
@@ -4685,7 +4685,7 @@
       "name": "jeremy-adk-orchestrator",
       "source": "./plugins/ai-ml/jeremy-adk-orchestrator",
       "description": "Production ADK orchestrator for A2A protocol and multi-agent coordination on Vertex AI",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "ai-ml",
       "keywords": [
         "vertex-ai",
@@ -4708,7 +4708,7 @@
       "name": "jeremy-vertex-validator",
       "source": "./plugins/ai-ml/jeremy-vertex-validator",
       "description": "Production readiness validator for Vertex AI deployments and configurations",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "ai-ml",
       "keywords": [
         "vertex-ai",
@@ -4729,7 +4729,7 @@
       "name": "jeremy-genkit-terraform",
       "source": "./plugins/devops/jeremy-genkit-terraform",
       "description": "Terraform modules for Firebase Genkit infrastructure and deployments",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "devops",
       "keywords": [
         "terraform",
@@ -4750,7 +4750,7 @@
       "name": "jeremy-adk-terraform",
       "source": "./plugins/devops/jeremy-adk-terraform",
       "description": "Terraform infrastructure as code for ADK and Vertex AI Agent Engine deployments",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "devops",
       "keywords": [
         "terraform",
@@ -4772,7 +4772,7 @@
       "name": "jeremy-vertex-terraform",
       "source": "./plugins/devops/jeremy-vertex-terraform",
       "description": "Terraform configurations for Vertex AI platform and Agent Engine",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "devops",
       "keywords": [
         "terraform",
@@ -4793,7 +4793,7 @@
       "name": "jeremy-vertex-engine",
       "source": "./plugins/ai-ml/jeremy-vertex-engine",
       "description": "Vertex AI Agent Engine deployment inspector and runtime validator",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "ai-ml",
       "keywords": [
         "vertex-ai",
@@ -4816,7 +4816,7 @@
       "name": "jeremy-gcp-starter-examples",
       "source": "./plugins/ai-ml/jeremy-gcp-starter-examples",
       "description": "Google Cloud starter kits and example code aggregator with ADK samples",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "ai-ml",
       "keywords": [
         "google-cloud",
@@ -4841,7 +4841,7 @@
       "name": "jeremy-github-actions-gcp",
       "source": "./plugins/devops/jeremy-github-actions-gcp",
       "description": "GitHub Actions CI/CD workflows for Google Cloud and Vertex AI deployments",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "devops",
       "keywords": [
         "github-actions",
@@ -5048,7 +5048,7 @@
       "name": "jeremy-adk-software-engineer",
       "source": "./plugins/ai-ml/jeremy-adk-software-engineer",
       "description": "ADK software engineer for creating production-ready agents (placeholder - to be implemented)",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "ai-ml",
       "keywords": [
         "adk",
@@ -5068,7 +5068,7 @@
       "name": "jeremy-firebase",
       "source": "./plugins/community/jeremy-firebase",
       "description": "Firebase platform expert for Firestore, Auth, Functions, and Vertex AI integration",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "community",
       "keywords": [
         "firebase",
@@ -5119,7 +5119,7 @@
       "name": "jeremy-google-adk",
       "source": "./plugins/jeremy-google-adk",
       "description": "Google Agent Development Kit (ADK) SDK starter kit for building Claude-powered AI agents with React patterns, multi-agent orchestration, and tool integration",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "ai-ml",
       "keywords": [
         "google",
@@ -5150,7 +5150,7 @@
       "name": "jeremy-vertex-ai",
       "source": "./plugins/jeremy-vertex-ai",
       "description": "Comprehensive Vertex AI integration plugin for building generative AI agents with Gemini, Vertex AI Studio, and production deployment on Google Cloud",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "ai-ml",
       "keywords": [
         "vertex-ai",
