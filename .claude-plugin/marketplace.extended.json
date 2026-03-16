@@ -8604,6 +8604,47 @@
       }
     },
     {
+      "name": "navigating-github",
+      "source": "./plugins/productivity/navigating-github",
+      "description": "Interactive GitHub setup and learning companion. Guides users from zero to a working GitHub setup, then teaches git and GitHub through hands-on exercises on real repos. Adapts to any skill level with six modes: setup, learn, save, share, understand, fix.",
+      "version": "1.0.0",
+      "category": "productivity",
+      "keywords": [
+        "github",
+        "git",
+        "learning",
+        "onboarding",
+        "beginner-friendly",
+        "interactive-learning",
+        "version-control",
+        "vibe-coding",
+        "setup",
+        "collaboration"
+      ],
+      "author": {
+        "name": "Jeremy Longshore",
+        "email": "jeremy@intentsolutions.io",
+        "url": "https://github.com/jeremylongshore"
+      },
+      "license": "MIT",
+      "repository": "https://github.com/jeremylongshore/navigating-github",
+      "components": {
+        "skills": 1,
+        "commands": 1
+      },
+      "external_sync": {
+        "enabled": true,
+        "source_repo": "jeremylongshore/navigating-github",
+        "source_path": "."
+      },
+      "verification": {
+        "score": 98,
+        "grade": "A",
+        "badge": "gold",
+        "lastValidated": "2026-03-16T00:00:00.000Z"
+      }
+    },
+    {
       "name": "wondelai-made-to-stick",
       "source": "./plugins/business-tools/wondelai-made-to-stick",
       "description": "Sticky messaging framework using the SUCCESs model (Simple, Unexpected, Concrete, Credible, Emotional, Stories). Make product messaging memorable and create compelling presentations.",
