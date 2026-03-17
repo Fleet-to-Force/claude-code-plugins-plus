@@ -529,7 +529,51 @@ Common errors and solutions:
 
 ## Examples
 
-See code examples in sections above for complete, runnable implementations.
+### Python — Complexity-Based Router
+
+```python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.environ["OPENROUTER_API_KEY"],
+)
+
+def estimate_complexity(prompt: str) -> str:
+    p = prompt.lower()
+    tokens = len(prompt.split())
+    if tokens > 200 or any(w in p for w in ["analyze", "compare", "explain why"]):
+        return "complex"
+    if any(w in p for w in ["code", "function", "write a", "implement"]):
+        return "medium"
+    return "simple"
+
+MODEL_MAP = {
+    "simple":  "google/gemma-2-9b-it:free",
+    "medium":  "openai/gpt-3.5-turbo",
+    "complex": "anthropic/claude-3.5-sonnet",
+}
+
+def routed_complete(prompt: str, max_tokens: int = 300) -> dict:
+    complexity = estimate_complexity(prompt)
+    model = MODEL_MAP[complexity]
+    print(f"[Router] complexity={complexity} model={model}")
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=max_tokens,
+    )
+    return {
+        "content": response.choices[0].message.content,
+        "model": response.model,
+        "complexity": complexity,
+    }
+
+print(routed_complete("What is 2+2?"))
+print(routed_complete("Write a Python sort function"))
+print(routed_complete("Analyze tradeoffs between microservices and monoliths"))
+```
 
 ## Resources
 
@@ -555,7 +599,51 @@ Common errors and solutions:
 
 ## Examples
 
-See code examples in sections above for complete, runnable implementations.
+### Python — Complexity-Based Router
+
+```python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.environ["OPENROUTER_API_KEY"],
+)
+
+def estimate_complexity(prompt: str) -> str:
+    p = prompt.lower()
+    tokens = len(prompt.split())
+    if tokens > 200 or any(w in p for w in ["analyze", "compare", "explain why"]):
+        return "complex"
+    if any(w in p for w in ["code", "function", "write a", "implement"]):
+        return "medium"
+    return "simple"
+
+MODEL_MAP = {
+    "simple":  "google/gemma-2-9b-it:free",
+    "medium":  "openai/gpt-3.5-turbo",
+    "complex": "anthropic/claude-3.5-sonnet",
+}
+
+def routed_complete(prompt: str, max_tokens: int = 300) -> dict:
+    complexity = estimate_complexity(prompt)
+    model = MODEL_MAP[complexity]
+    print(f"[Router] complexity={complexity} model={model}")
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=max_tokens,
+    )
+    return {
+        "content": response.choices[0].message.content,
+        "model": response.model,
+        "complexity": complexity,
+    }
+
+print(routed_complete("What is 2+2?"))
+print(routed_complete("Write a Python sort function"))
+print(routed_complete("Analyze tradeoffs between microservices and monoliths"))
+```
 
 ## Resources
 

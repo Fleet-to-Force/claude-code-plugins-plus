@@ -428,7 +428,44 @@ Common errors and solutions:
 
 ## Examples
 
-See code examples in sections above for complete, runnable implementations.
+### End-to-End Routing Pipeline (Python)
+
+```python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.environ["OPENROUTER_API_KEY"],
+)
+
+ROUTING_RULES = [
+    {"condition": lambda p, u: u == "free",          "model": "google/gemma-2-9b-it:free"},
+    {"condition": lambda p, u: len(p) > 2000,        "model": "anthropic/claude-3.5-sonnet"},
+    {"condition": lambda p, u: "code" in p.lower(),  "model": "anthropic/claude-3.5-sonnet"},
+    {"condition": lambda p, u: True,                 "model": "openai/gpt-3.5-turbo"},
+]
+
+def route_request(prompt: str, user_tier: str = "paid") -> str:
+    for rule in ROUTING_RULES:
+        if rule["condition"](prompt, user_tier):
+            return rule["model"]
+    return "openai/gpt-3.5-turbo"
+
+def chat(prompt: str, user_tier: str = "paid") -> str:
+    model = route_request(prompt, user_tier)
+    print(f"[Router] Selected: {model} (tier={user_tier})")
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=300,
+    )
+    return response.choices[0].message.content
+
+print(chat("Hello!", user_tier="free"))       # free model
+print(chat("Debug this Python code: ..."))    # sonnet (code task)
+print(chat("What is 2+2?"))                   # gpt-3.5-turbo (default)
+```
 
 ## Resources
 
@@ -454,7 +491,44 @@ Common errors and solutions:
 
 ## Examples
 
-See code examples in sections above for complete, runnable implementations.
+### End-to-End Routing Pipeline (Python)
+
+```python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.environ["OPENROUTER_API_KEY"],
+)
+
+ROUTING_RULES = [
+    {"condition": lambda p, u: u == "free",          "model": "google/gemma-2-9b-it:free"},
+    {"condition": lambda p, u: len(p) > 2000,        "model": "anthropic/claude-3.5-sonnet"},
+    {"condition": lambda p, u: "code" in p.lower(),  "model": "anthropic/claude-3.5-sonnet"},
+    {"condition": lambda p, u: True,                 "model": "openai/gpt-3.5-turbo"},
+]
+
+def route_request(prompt: str, user_tier: str = "paid") -> str:
+    for rule in ROUTING_RULES:
+        if rule["condition"](prompt, user_tier):
+            return rule["model"]
+    return "openai/gpt-3.5-turbo"
+
+def chat(prompt: str, user_tier: str = "paid") -> str:
+    model = route_request(prompt, user_tier)
+    print(f"[Router] Selected: {model} (tier={user_tier})")
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=300,
+    )
+    return response.choices[0].message.content
+
+print(chat("Hello!", user_tier="free"))       # free model
+print(chat("Debug this Python code: ..."))    # sonnet (code task)
+print(chat("What is 2+2?"))                   # gpt-3.5-turbo (default)
+```
 
 ## Resources
 

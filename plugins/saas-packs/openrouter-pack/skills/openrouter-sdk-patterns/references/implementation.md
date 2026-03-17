@@ -356,7 +356,63 @@ Common errors and solutions:
 
 ## Examples
 
-See code examples in sections above for complete, runnable implementations.
+### Python — Full Client Wrapper
+
+```python
+import os
+import time
+import logging
+from dataclasses import dataclass
+from openai import OpenAI, RateLimitError
+
+logger = logging.getLogger("openrouter")
+
+@dataclass
+class CompletionResult:
+    content: str
+    model: str
+    total_tokens: int
+    latency_ms: float
+
+
+class OpenRouterClient:
+    def __init__(self, api_key: str | None = None, default_model: str = "openai/gpt-3.5-turbo"):
+        self._client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key or os.environ["OPENROUTER_API_KEY"],
+            max_retries=0,
+        )
+        self.default_model = default_model
+        self.total_tokens = 0
+
+    def complete(self, prompt: str, model: str | None = None, max_tokens: int = 500) -> CompletionResult:
+        model = model or self.default_model
+        for attempt in range(3):
+            start = time.perf_counter()
+            try:
+                resp = self._client.chat.completions.create(
+                    model=model, messages=[{"role": "user", "content": prompt}], max_tokens=max_tokens,
+                )
+                latency = (time.perf_counter() - start) * 1000
+                self.total_tokens += resp.usage.total_tokens
+                return CompletionResult(
+                    content=resp.choices[0].message.content or "",
+                    model=resp.model,
+                    total_tokens=resp.usage.total_tokens,
+                    latency_ms=round(latency, 1),
+                )
+            except RateLimitError:
+                if attempt < 2:
+                    time.sleep(2 ** attempt)
+                else:
+                    raise
+
+
+client = OpenRouterClient()
+result = client.complete("Summarize the water cycle.")
+print(result.content)
+print(f"Tokens: {result.total_tokens}, Latency: {result.latency_ms}ms")
+```
 
 ## Resources
 
@@ -382,7 +438,63 @@ Common errors and solutions:
 
 ## Examples
 
-See code examples in sections above for complete, runnable implementations.
+### Python — Full Client Wrapper
+
+```python
+import os
+import time
+import logging
+from dataclasses import dataclass
+from openai import OpenAI, RateLimitError
+
+logger = logging.getLogger("openrouter")
+
+@dataclass
+class CompletionResult:
+    content: str
+    model: str
+    total_tokens: int
+    latency_ms: float
+
+
+class OpenRouterClient:
+    def __init__(self, api_key: str | None = None, default_model: str = "openai/gpt-3.5-turbo"):
+        self._client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key or os.environ["OPENROUTER_API_KEY"],
+            max_retries=0,
+        )
+        self.default_model = default_model
+        self.total_tokens = 0
+
+    def complete(self, prompt: str, model: str | None = None, max_tokens: int = 500) -> CompletionResult:
+        model = model or self.default_model
+        for attempt in range(3):
+            start = time.perf_counter()
+            try:
+                resp = self._client.chat.completions.create(
+                    model=model, messages=[{"role": "user", "content": prompt}], max_tokens=max_tokens,
+                )
+                latency = (time.perf_counter() - start) * 1000
+                self.total_tokens += resp.usage.total_tokens
+                return CompletionResult(
+                    content=resp.choices[0].message.content or "",
+                    model=resp.model,
+                    total_tokens=resp.usage.total_tokens,
+                    latency_ms=round(latency, 1),
+                )
+            except RateLimitError:
+                if attempt < 2:
+                    time.sleep(2 ** attempt)
+                else:
+                    raise
+
+
+client = OpenRouterClient()
+result = client.complete("Summarize the water cycle.")
+print(result.content)
+print(f"Tokens: {result.total_tokens}, Latency: {result.latency_ms}ms")
+```
 
 ## Resources
 
