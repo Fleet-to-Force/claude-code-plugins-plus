@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Ml Model Trainer
 
-This skill provides automated assistance for ml model trainer tasks.
+Train machine learning models with configurable architectures, loss functions, and optimization strategies across classification, regression, and other task types.
 
 ## Overview
 

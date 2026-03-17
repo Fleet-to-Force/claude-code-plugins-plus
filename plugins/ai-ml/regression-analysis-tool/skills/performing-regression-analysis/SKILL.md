@@ -10,12 +10,10 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Regression Analysis Tool
 
-This skill provides automated assistance for regression analysis tool tasks.
+Perform regression analysis by building and validating linear, polynomial, and other regression models to uncover variable relationships and predict continuous outcomes.
 
 ## Overview
 
-
-This skill provides automated assistance for regression analysis tool tasks.
 analyze data, build regression models, and provide insights into the relationships between variables. It leverages the regression-analysis-tool plugin to automate the process and ensure best practices are followed.
 
 ## How It Works

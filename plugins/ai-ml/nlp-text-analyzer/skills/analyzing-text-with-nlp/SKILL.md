@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Nlp Text Analyzer
 
-This skill provides automated assistance for nlp text analyzer tasks.
+Analyze text using NLP techniques including sentiment analysis, keyword extraction, named entity recognition, and topic modeling.
 
 ## Overview
 

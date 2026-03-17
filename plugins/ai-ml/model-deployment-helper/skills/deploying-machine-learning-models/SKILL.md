@@ -10,12 +10,10 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Model Deployment Helper
 
-This skill provides automated assistance for model deployment helper tasks.
+Deploy trained ML models to production environments with API endpoints, containerization, data validation, and performance monitoring.
 
 ## Overview
 
-
-This skill provides automated assistance for model deployment helper tasks.
 This skill streamlines the process of deploying machine learning models to production, ensuring efficient and reliable model serving. It leverages automated workflows and best practices to simplify the deployment process and optimize performance.
 
 ## How It Works

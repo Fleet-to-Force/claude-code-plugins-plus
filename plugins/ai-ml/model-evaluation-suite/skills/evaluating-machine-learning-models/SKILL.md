@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Model Evaluation Suite
 
-This skill provides automated assistance for model evaluation suite tasks.
+Evaluate machine learning models using a comprehensive suite of metrics including accuracy, precision, recall, F1-score, and custom KPIs.
 
 ## Overview
 

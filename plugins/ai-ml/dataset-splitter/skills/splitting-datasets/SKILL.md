@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Dataset Splitter
 
-This skill provides automated assistance for dataset splitter tasks.
+Split datasets into training, validation, and testing sets with configurable ratios and stratification options.
 
 ## Overview
 

@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Classification Model Builder
 
-This skill provides automated assistance for classification model builder tasks.
+Build and evaluate classification models for supervised learning tasks with labeled data.
 
 ## Overview
 

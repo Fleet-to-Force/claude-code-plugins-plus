@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Sentiment Analysis Tool
 
-This skill provides automated assistance for sentiment analysis tool tasks.
+Classify text sentiment as positive, negative, or neutral with confidence scores for customer reviews, social media posts, and survey responses.
 
 ## Overview
 

@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Clustering Algorithm Runner
 
-This skill provides automated assistance for clustering algorithm runner tasks.
+Run clustering algorithms (K-means, DBSCAN, hierarchical) on datasets to discover natural groupings and structure in data.
 
 ## Overview
 

@@ -10,12 +10,10 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Transfer Learning Adapter
 
-This skill provides automated assistance for transfer learning adapter tasks.
+Adapt pre-trained models (ResNet, BERT, GPT) to new tasks and datasets through fine-tuning, layer freezing, and domain-specific optimization.
 
 ## Overview
 
-
-This skill provides automated assistance for transfer learning adapter tasks.
 This skill streamlines the process of adapting pre-trained machine learning models via transfer learning. It enables you to quickly fine-tune models for specific tasks, saving time and resources compared to training from scratch. It handles the complexities of model adaptation, data validation, and performance optimization.
 
 ## How It Works

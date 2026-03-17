@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Recommendation Engine
 
-This skill provides automated assistance for recommendation engine tasks.
+Build recommendation systems using collaborative filtering, content-based filtering, or hybrid approaches tailored to specific datasets and use cases.
 
 ## Overview
 

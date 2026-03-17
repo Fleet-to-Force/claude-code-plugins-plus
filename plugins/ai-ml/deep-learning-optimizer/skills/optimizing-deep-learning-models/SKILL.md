@@ -10,12 +10,10 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Deep Learning Optimizer
 
-This skill provides automated assistance for deep learning optimizer tasks.
+Optimize deep learning models by tuning optimizers (Adam, SGD), learning rate schedules, and regularization strategies to improve accuracy and reduce training time.
 
 ## Overview
 
-
-This skill provides automated assistance for deep learning optimizer tasks.
 This skill empowers Claude to automatically optimize deep learning models, enhancing their performance and efficiency. It intelligently applies various optimization techniques based on the model's characteristics and the user's objectives.
 
 ## How It Works

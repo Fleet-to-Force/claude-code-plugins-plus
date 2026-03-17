@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Neural Network Builder
 
-This skill provides automated assistance for neural network builder tasks.
+Design and construct neural network architectures with configurable layers, activation functions, and training parameters for tasks like classification, generation, and sequence modeling.
 
 ## Overview
 

@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Model Explainability Tool
 
-This skill provides automated assistance for model explainability tool tasks.
+Interpret machine learning model predictions using SHAP, LIME, and feature importance analysis to explain model behavior.
 
 ## Overview
 

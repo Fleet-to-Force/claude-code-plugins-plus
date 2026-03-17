@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Data Preprocessing Pipeline
 
-This skill provides automated assistance for data preprocessing pipeline tasks.
+Construct and execute automated data preprocessing pipelines for cleaning, transforming, and validating ML-ready datasets.
 
 ## Overview
 

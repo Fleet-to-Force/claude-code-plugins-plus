@@ -10,12 +10,10 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Feature Engineering Toolkit
 
-This skill provides automated assistance for feature engineering toolkit tasks.
+Create, select, and transform features to improve ML model performance, handling scaling, encoding, interaction terms, and importance analysis.
 
 ## Overview
 
-
-This skill provides automated assistance for feature engineering toolkit tasks.
 leverage the feature-engineering-toolkit plugin to enhance machine learning models. It automates the process of creating new features, selecting the most relevant ones, and transforming existing features to better suit the model's needs. Use this skill to improve the accuracy, efficiency, and interpretability of machine learning models.
 
 ## How It Works

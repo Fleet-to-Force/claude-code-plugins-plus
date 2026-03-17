@@ -10,12 +10,10 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Computer Vision Processor
 
-This skill provides automated assistance for computer vision processor tasks.
+Process images using object detection, classification, and segmentation pipelines with configurable model backends.
 
 ## Overview
 
-
-This skill provides automated assistance for computer vision processor tasks.
 This skill empowers Claude to leverage the computer-vision-processor plugin to analyze images, detect objects, and extract meaningful information. It automates computer vision workflows, optimizes performance, and provides detailed insights based on image content.
 
 ## How It Works

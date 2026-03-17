@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Data Visualization Creator
 
-This skill provides automated assistance for data visualization creator tasks.
+Generate plots, charts, and graphs from data with automatic visualization type selection based on data characteristics.
 
 ## Overview
 

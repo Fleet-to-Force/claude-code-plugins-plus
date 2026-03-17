@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Hyperparameter Tuner
 
-This skill provides automated assistance for hyperparameter tuner tasks.
+Optimize machine learning model hyperparameters using grid search, random search, or Bayesian optimization to maximize performance.
 
 ## Overview
 

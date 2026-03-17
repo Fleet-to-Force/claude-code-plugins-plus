@@ -10,12 +10,10 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Time Series Forecaster
 
-This skill provides automated assistance for time series forecaster tasks.
+Forecast future values from historical time series data using ARIMA, Prophet, and other models with trend, seasonality, and confidence interval analysis.
 
 ## Overview
 
-
-This skill provides automated assistance for time series forecaster tasks.
 This skill empowers Claude to perform time series forecasting, providing insights into future trends and patterns. It automates the process of data analysis, model selection, and prediction generation, delivering valuable information for decision-making.
 
 ## How It Works

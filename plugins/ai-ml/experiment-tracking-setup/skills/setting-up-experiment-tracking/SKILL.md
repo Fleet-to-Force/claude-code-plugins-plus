@@ -10,12 +10,10 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Experiment Tracking Setup
 
-This skill provides automated assistance for experiment tracking setup tasks.
+Configure ML experiment tracking with MLflow or Weights & Biases, including environment setup and code for logging parameters, metrics, and artifacts.
 
 ## Overview
 
-
-This skill provides automated assistance for experiment tracking setup tasks.
 This skill streamlines the process of setting up experiment tracking for machine learning projects. It automates environment configuration, tool initialization, and provides code examples to get you started quickly.
 
 ## How It Works
