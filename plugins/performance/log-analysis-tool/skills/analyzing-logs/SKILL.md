@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Log Analysis Tool
 
-This skill provides automated assistance for log analysis tool tasks.
+Analyze application logs to identify slow requests, recurring error patterns, and resource usage anomalies with structured reporting and optimization recommendations.
 
 ## Overview
 

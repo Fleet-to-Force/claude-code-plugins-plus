@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Memory Leak Detector
 
-This skill provides automated assistance for memory leak detector tasks.
+Detect and diagnose memory leaks in Node.js, Python, and JVM applications by analyzing event listeners, closures, unbounded caches, and retained references.
 
 ## Overview
 

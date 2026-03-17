@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Sla Sli Tracker
 
-This skill provides automated assistance for sla sli tracker tasks.
+Define and track SLAs, SLIs, and SLOs for service reliability including availability targets, latency budgets, error rate thresholds, and error budget burn rates.
 
 ## Overview
 

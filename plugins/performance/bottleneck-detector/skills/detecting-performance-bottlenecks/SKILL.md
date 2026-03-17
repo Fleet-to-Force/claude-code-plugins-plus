@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Bottleneck Detector
 
-This skill provides automated assistance for bottleneck detector tasks.
+Detect and diagnose performance bottlenecks across CPU, memory, I/O, database, and lock contention layers with targeted remediation strategies.
 
 ## Overview
 

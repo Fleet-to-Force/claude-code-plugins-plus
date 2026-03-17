@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Network Latency Analyzer
 
-This skill provides automated assistance for network latency analyzer tasks.
+Diagnose network latency issues and optimize request patterns through parallelization, batching, connection pooling, and timeout tuning.
 
 ## Overview
 

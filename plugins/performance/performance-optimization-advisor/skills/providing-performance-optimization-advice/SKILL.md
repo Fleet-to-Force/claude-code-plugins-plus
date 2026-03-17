@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Performance Optimization Advisor
 
-This skill provides automated assistance for performance optimization advisor tasks.
+Deliver prioritized performance optimization recommendations across frontend, backend, and infrastructure layers with impact estimates and phased implementation roadmaps.
 
 ## Overview
 

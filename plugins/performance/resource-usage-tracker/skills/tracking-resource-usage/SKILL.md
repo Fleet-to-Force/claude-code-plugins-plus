@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Resource Usage Tracker
 
-This skill provides automated assistance for resource usage tracker tasks.
+Track CPU, memory, disk I/O, and network utilization in real time to identify bottlenecks, right-size instances, and reduce cloud infrastructure costs.
 
 ## Overview
 

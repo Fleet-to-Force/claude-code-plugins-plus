@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Response Time Tracker
 
-This skill provides automated assistance for response time tracker tasks.
+Track and analyze response times across API endpoints, database queries, and service calls with P50/P95/P99 percentile reporting and SLO compliance monitoring.
 
 ## Overview
 

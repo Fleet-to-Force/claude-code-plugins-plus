@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Throughput Analyzer
 
-This skill provides automated assistance for throughput analyzer tasks.
+Analyze system throughput across request handling, data processing pipelines, and queue consumers to identify capacity limits and evaluate scaling strategies.
 
 ## Overview
 

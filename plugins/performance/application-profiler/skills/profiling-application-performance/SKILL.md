@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Application Profiler
 
-This skill provides automated assistance for application profiler tasks.
+Profile application performance across Node.js, Python, and Java stacks by analyzing CPU usage, memory allocation, and execution hotspots to pinpoint optimization targets.
 
 ## Overview
 

@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Error Rate Monitor
 
-This skill provides automated assistance for error rate monitor tasks.
+Monitor and analyze application error rates across HTTP endpoints, database queries, external APIs, and background jobs with threshold-based alerting and error budget tracking.
 
 ## Overview
 

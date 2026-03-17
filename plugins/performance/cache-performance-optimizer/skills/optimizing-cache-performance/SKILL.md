@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Cache Performance Optimizer
 
-This skill provides automated assistance for cache performance optimizer tasks.
+Analyze and optimize caching strategies for Redis, Memcached, and in-memory caches by tuning hit rates, TTL configurations, key design, and invalidation policies.
 
 ## Overview
 

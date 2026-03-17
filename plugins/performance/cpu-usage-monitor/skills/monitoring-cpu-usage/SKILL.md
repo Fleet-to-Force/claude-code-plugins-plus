@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Cpu Usage Monitor
 
-This skill provides automated assistance for cpu usage monitor tasks.
+Identify CPU hotspots, analyze algorithmic complexity, and detect blocking operations in application code with targeted optimization recommendations.
 
 ## Overview
 

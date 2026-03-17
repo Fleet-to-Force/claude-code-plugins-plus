@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Performance Budget Validator
 
-This skill provides automated assistance for performance budget validator tasks.
+Validate page load times, bundle sizes, and API response times against predefined performance budgets to catch regressions before they reach production.
 
 ## Overview
 

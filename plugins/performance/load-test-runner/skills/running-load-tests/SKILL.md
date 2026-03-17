@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Load Test Runner
 
-This skill provides automated assistance for load test runner tasks.
+Create and execute load tests using k6, JMeter, and Artillery to validate application performance under stress, spike, soak, and scalability scenarios.
 
 ## Overview
 

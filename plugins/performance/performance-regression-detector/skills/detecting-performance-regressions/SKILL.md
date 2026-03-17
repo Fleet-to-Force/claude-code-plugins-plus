@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Performance Regression Detector
 
-This skill provides automated assistance for performance regression detector tasks.
+Detect performance regressions in CI/CD pipelines by comparing response times, throughput, and resource usage against historical baselines using statistical analysis.
 
 ## Overview
 

@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Synthetic Monitoring Setup
 
-This skill provides automated assistance for synthetic monitoring setup tasks.
+Configure synthetic monitoring for uptime checks, transaction flows, and API health using Pingdom, Datadog, or New Relic with multi-location probes and alerting.
 
 ## Overview
 

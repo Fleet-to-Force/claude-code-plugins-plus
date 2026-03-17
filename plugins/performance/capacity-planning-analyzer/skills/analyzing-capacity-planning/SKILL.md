@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Capacity Planning Analyzer
 
-This skill provides automated assistance for capacity planning analyzer tasks.
+Analyze current resource utilization, forecast growth trends, and generate scaling recommendations with cost estimates for CPU, memory, storage, and network capacity.
 
 ## Overview
 

@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Real User Monitoring
 
-This skill provides automated assistance for real user monitoring tasks.
+Implement Real User Monitoring (RUM) to capture Core Web Vitals, page load times, and custom performance events using Google Analytics, Datadog RUM, or New Relic.
 
 ## Overview
 

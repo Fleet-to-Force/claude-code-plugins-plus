@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Infrastructure Metrics Collector
 
-This skill provides automated assistance for infrastructure metrics collector tasks.
+Collect and centralize infrastructure metrics across compute, storage, network, containers, load balancers, and databases using Prometheus, Datadog, or CloudWatch.
 
 ## Overview
 

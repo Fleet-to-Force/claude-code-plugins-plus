@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Distributed Tracing Setup
 
-This skill provides automated assistance for distributed tracing setup tasks.
+Set up distributed tracing for microservices using OpenTelemetry, Jaeger, or Zipkin with context propagation, span creation, and trace collection configuration.
 
 ## Overview
 

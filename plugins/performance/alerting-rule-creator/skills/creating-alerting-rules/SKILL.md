@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Alerting Rule Creator
 
-This skill provides automated assistance for alerting rule creator tasks.
+Create production-ready alerting rules for Prometheus, Grafana, and PagerDuty with intelligent thresholds, routing policies, and escalation procedures.
 
 ## Overview
 

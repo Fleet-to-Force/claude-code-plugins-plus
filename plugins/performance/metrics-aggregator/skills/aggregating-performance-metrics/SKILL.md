@@ -9,7 +9,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Metrics Aggregator
 
-This skill provides automated assistance for metrics aggregator tasks.
+Aggregate and centralize performance metrics from applications, databases, caches, and infrastructure into Prometheus, StatsD, or CloudWatch with unified naming conventions.
 
 ## Overview
 

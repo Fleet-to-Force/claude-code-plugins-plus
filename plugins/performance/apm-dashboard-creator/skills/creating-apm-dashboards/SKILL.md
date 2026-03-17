@@ -10,7 +10,7 @@ compatible-with: claude-code, codex, openclaw
 ---
 # Apm Dashboard Creator
 
-This skill provides automated assistance for apm dashboard creator tasks.
+Generate Application Performance Monitoring dashboards for Grafana, Datadog, and New Relic with golden signals, request metrics, and resource utilization panels.
 
 ## Overview
 
