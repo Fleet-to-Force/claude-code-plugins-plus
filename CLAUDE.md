@@ -176,7 +176,29 @@ license: MIT
 
 Valid tools: `Read`, `Write`, `Edit`, `Bash`, `Glob`, `Grep`, `WebFetch`, `WebSearch`, `Task`, `TodoWrite`, `NotebookEdit`, `AskUserQuestion`, `Skill`
 
-Path variable: Use `${CLAUDE_SKILL_DIR}` for portable file references within skills.
+Path variables:
+- `${CLAUDE_SKILL_DIR}` for portable file references within skills
+- `${CLAUDE_PLUGIN_ROOT}` for plugin root directory references in hooks
+- `${CLAUDE_PLUGIN_DATA}` for persistent plugin state (survives updates/reinstalls, v2.1.78+)
+
+### Agent Frontmatter (agents/*.md)
+```yaml
+---
+name: agent-name
+description: "20-200 char description of the agent's specialty"
+capabilities: ["capability1", "capability2"]
+# Optional fields:
+# model: sonnet                         # LLM model override
+# effort: low|medium|high               # Model reasoning effort (v2.1.78+)
+# maxTurns: 10                          # Max agentic loop iterations (v2.1.78+)
+# disallowedTools: ["mcp__servername"]  # Tools to deny (v2.1.78+, denylist — opposite of skills' allowed-tools)
+# expertise_level: intermediate|advanced|expert
+# activation_priority: low|medium|high|critical
+# permissionMode: default               # Permission behavior
+---
+```
+
+**Key difference from skills:** Agents use `disallowedTools` (denylist) while skills use `allowed-tools` (allowlist). The `effort` and `maxTurns` fields are agent-only — they control autonomous iteration behavior that doesn't apply to skills or commands.
 
 ## Adding a New Plugin
 

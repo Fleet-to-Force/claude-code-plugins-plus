@@ -17,6 +17,7 @@ const VALID_CATEGORIES = [
 const VALID_DIFFICULTIES = ['beginner', 'intermediate', 'advanced', 'expert'];
 const VALID_EXPERTISE = ['intermediate', 'advanced', 'expert'];
 const VALID_PRIORITIES = ['low', 'medium', 'high', 'critical'];
+const VALID_EFFORT_LEVELS = ['low', 'medium', 'high'];
 
 export interface FrontmatterValidationResult {
   file: string;
@@ -185,6 +186,33 @@ function validateAgentFrontmatter(frontmatter: Record<string, any>, filePath: st
   if ('activation_priority' in frontmatter) {
     if (!VALID_PRIORITIES.includes(frontmatter.activation_priority)) {
       errors.push(`Invalid activation_priority. Must be one of: ${VALID_PRIORITIES.join(', ')}`);
+    }
+  }
+
+  // Optional field: effort (v2.1.78+ — model reasoning effort per turn)
+  if ('effort' in frontmatter) {
+    if (!VALID_EFFORT_LEVELS.includes(frontmatter.effort)) {
+      errors.push(`Invalid effort. Must be one of: ${VALID_EFFORT_LEVELS.join(', ')}`);
+    }
+  }
+
+  // Optional field: maxTurns (v2.1.78+ — caps agentic loop iterations)
+  if ('maxTurns' in frontmatter) {
+    if (typeof frontmatter.maxTurns !== 'number' || !Number.isInteger(frontmatter.maxTurns) || frontmatter.maxTurns < 1) {
+      errors.push("Field 'maxTurns' must be a positive integer");
+    }
+  }
+
+  // Optional field: disallowedTools (v2.1.78+ — tool denylist)
+  if ('disallowedTools' in frontmatter) {
+    if (!Array.isArray(frontmatter.disallowedTools)) {
+      errors.push("Field 'disallowedTools' must be an array");
+    } else {
+      for (let i = 0; i < frontmatter.disallowedTools.length; i++) {
+        if (typeof frontmatter.disallowedTools[i] !== 'string') {
+          errors.push(`Field 'disallowedTools[${i}]' must be a string`);
+        }
+      }
     }
   }
 

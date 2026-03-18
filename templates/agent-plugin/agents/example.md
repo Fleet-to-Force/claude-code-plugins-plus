@@ -1,6 +1,14 @@
 ---
-description: Brief description of agent's specialty
+name: example-agent
+description: "Brief description of agent's specialty (20-200 chars)"
 capabilities: ["capability1", "capability2"]
+# Optional v2.1.78+ fields:
+# effort: medium                        # low|medium|high — model reasoning effort
+# maxTurns: 10                          # Max agentic loop iterations
+# disallowedTools: ["mcp__servername"]  # Tools to deny (denylist)
+# model: sonnet                         # LLM model override
+# expertise_level: intermediate         # intermediate|advanced|expert
+# activation_priority: medium           # low|medium|high|critical
 ---
 
 # Example Agent

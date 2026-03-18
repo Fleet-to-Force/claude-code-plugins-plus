@@ -705,6 +705,7 @@ def validate_command(path: Path) -> Dict[str, Any]:
 
 VALID_EXPERTISE = ['intermediate', 'advanced', 'expert']
 VALID_PRIORITIES = ['low', 'medium', 'high', 'critical']
+VALID_EFFORT_LEVELS = ['low', 'medium', 'high']
 
 
 def find_agent_files(root: Path) -> List[Path]:
@@ -780,6 +781,25 @@ def validate_agent(path: Path) -> Dict[str, Any]:
     if 'activation_priority' in fm:
         if fm['activation_priority'] not in VALID_PRIORITIES:
             warnings.append(f"[agent] Unknown activation_priority: {fm['activation_priority']}")
+
+    # Optional: effort (v2.1.78+ — controls model reasoning effort per turn)
+    if 'effort' in fm:
+        if fm['effort'] not in VALID_EFFORT_LEVELS:
+            warnings.append(f"[agent] Unknown effort level: {fm['effort']}. Must be one of: {', '.join(VALID_EFFORT_LEVELS)}")
+
+    # Optional: maxTurns (v2.1.78+ — caps agentic loop iterations)
+    if 'maxTurns' in fm:
+        if not isinstance(fm['maxTurns'], int) or fm['maxTurns'] < 1:
+            errors.append("[agent] 'maxTurns' must be a positive integer")
+
+    # Optional: disallowedTools (v2.1.78+ — denylist for agent tool access)
+    if 'disallowedTools' in fm:
+        if not isinstance(fm['disallowedTools'], list):
+            errors.append("[agent] 'disallowedTools' must be an array of strings")
+        else:
+            for i, tool in enumerate(fm['disallowedTools']):
+                if not isinstance(tool, str):
+                    errors.append(f"[agent] 'disallowedTools[{i}]' must be a string")
 
     return {'errors': errors, 'warnings': warnings, 'type': 'agent'}
 
