@@ -1,99 +1,209 @@
 # Claude Agent Skills: Source of Truth Specification
 
-Canonical reference synthesizing all authoritative sources:
-- **AgentSkills.io** — [agentskills.io/specification](https://agentskills.io/specification) (open standard, Dec 2025)
-- **Anthropic Best Practices** — [code.claude.com/docs/en/skills](https://code.claude.com/docs/en/skills)
+Canonical reference from [Anthropic docs](https://code.claude.com/docs/en/skills). Last synced: 2026-03-21.
+
+Additional references:
 - **Claude Code Extensions** — platform-specific fields ([changelog](https://code.claude.com/docs/en/changelog))
 - **Anthropic Engineering Blog** — progressive disclosure, degrees of freedom
 - **anthropics/skills** — [github.com/anthropics/skills](https://github.com/anthropics/skills) (official skill-creator reference implementation)
-- **Lee Han Chung Deep Dive** — [leehanchung.github.io](https://leehanchung.github.io/blogs/2025/10/26/claude-skills-deep-dive/) (authoritative technical reference)
 
 ---
 
 ## 1. Frontmatter Fields
 
-### Required (AgentSkills.io Spec)
+### Anthropic Standard (11 fields)
+
+| Field | Type | Required | Constraints |
+|-------|------|----------|-------------|
+| `name` | string | Yes | 1-64 chars, kebab-case, must match directory name |
+| `description` | string | Yes | 1-1024 chars, what + when to use, third person |
+| `allowed-tools` | string | No | Comma-separated tool names |
+| `model` | string | No | `sonnet`, `haiku`, `opus`, `inherit`, or full model ID |
+| `effort` | string | No | `low`, `medium`, `high`, `max` |
+| `argument-hint` | string | No | Autocomplete hint for `/skill-name` |
+| `context` | string | No | `fork` only |
+| `agent` | string | No | Subagent type (requires `context: fork`) |
+| `user-invocable` | boolean | No | Default: `true` |
+| `disable-model-invocation` | boolean | No | Default: `false` |
+| `hooks` | object | No | Lifecycle hooks (PreToolUse, PostToolUse, Stop, SubagentStop, SessionStart, SessionEnd) |
+
+### Enterprise Additions (5 fields)
+
+These are not part of the Anthropic core spec but are used by the Tons of Skills marketplace and enterprise validators.
 
 | Field | Type | Constraints |
 |-------|------|-------------|
-| `name` | string | 1-64 chars, lowercase alphanumeric + hyphens, no start/end/consecutive hyphens, must match directory name |
-| `description` | string | 1-1024 chars, non-empty, what it does + when to use it, third person, specific keywords for discovery |
-
-### Optional (AgentSkills.io Spec)
-
-| Field | Type | Constraints |
-|-------|------|-------------|
-| `license` | string | License name (SPDX) or bundled file reference |
-| `compatibility` | string | 1-500 chars, environment requirements (OS, runtime, tools needed) |
-| `metadata` | object | Arbitrary key-value map for custom data (category, maintainer, etc.) |
-| `allowed-tools` | string | Space or comma-delimited pre-approved tools (experimental) |
-| `version` | string | Semver (X.Y.Z), top-level field |
-| `author` | string | Author name + email (`Name <email>`), top-level field |
-| `license` | string | SPDX identifier (MIT, Apache-2.0), top-level field |
-| `compatible-with` | string | Comma-separated platform list (claude-code, codex, openclaw, aider, continue, cursor, windsurf) |
+| `version` | string | Semver (`X.Y.Z`) |
+| `author` | string | `Name <email>` |
+| `license` | string | SPDX identifier (MIT, Apache-2.0, etc.) |
+| `compatible-with` | string | Comma-separated platforms (`claude-code`, `codex`, `openclaw`, `aider`, `continue`, `cursor`, `windsurf`) |
 | `tags` | array | Discovery tags as list of strings |
-
-### Claude Code Extensions (platform-specific, not in open standard)
-
-| Field | Type | Purpose |
-|-------|------|---------|
-| `argument-hint` | string | Autocomplete hint shown after `/name`, e.g. `[issue-number]` |
-| `disable-model-invocation` | boolean | Prevent auto-loading; require explicit `/name` invocation |
-| `user-invocable` | boolean | `false` = hide from `/` menu (background knowledge only) |
-| `model` | string | Model override: `inherit`, `sonnet`, `haiku`, `opus`, or model ID |
-| `effort` | string | Model reasoning effort override: `low`, `medium`, `high`, `max` (v2.1.80+) |
-| `context` | string | `fork` = execute in subagent (isolated context) |
-| `agent` | string | Subagent type when `context: fork`: `Explore`, `Plan`, `general-purpose`, or custom agent name |
-| `skills` | array | List of skill names to preload into subagent context (v2.1.78+) |
-| `hooks` | object | Skill-scoped lifecycle hooks (PreToolUse, PostToolUse, etc.) |
 
 ### Field Relationships
 
 - `context: fork` + `agent` work together (agent requires fork context)
 - `disable-model-invocation: true` + `user-invocable: false` are contradictory (use one)
-- `allowed-tools` is experimental; scoped Bash like `Bash(git:*)` is best practice but not enforced by runtime
+- `allowed-tools` scoped Bash like `Bash(git:*)` is best practice but not enforced by runtime
 - `author`, `version`, `license`, `tags`, `compatible-with` are TOP-LEVEL fields (marketplace validator scores them at top-level)
-- `metadata` is for custom data not covered by the spec (category, maintainer, etc.)
-- `effort` overrides model reasoning effort (v2.1.80+, works independently of other fields)
-- `skills` field in agent definitions preloads named skills into subagent context
+- `effort` overrides model reasoning effort (works independently of other fields)
+- `max` effort is only available with Opus 4.6
+
+### Fields NOT in Anthropic Spec (ERROR if found)
+
+| Field | Origin | Migration |
+|-------|--------|-----------|
+| `capabilities` | Invented | Remove — describe capabilities in `description` |
+| `expertise_level` | Invented | Remove — no replacement |
+| `activation_priority` | Invented | Remove — no replacement |
+| `compatibility` | AgentSkills.io | Remove — note requirements in SKILL.md body or description |
+| `metadata` | AgentSkills.io | Remove — use top-level fields instead |
+| `when_to_use` | Deprecated | Move content to `description` |
+| `mode` | Deprecated | Use `disable-model-invocation` instead |
+
+### Recommended Field Order
+
+```yaml
+---
+# Required (Anthropic)
+name: skill-name
+description: |
+  What it does. Use when [scenario].
+  Trigger with "/skill-name" or "[natural phrase]".
+
+# Tools
+allowed-tools: "Read,Write,Glob,Grep"
+
+# Enterprise identity (top-level)
+version: 1.0.0
+author: Name <email>
+license: MIT
+
+# Anthropic extensions (as needed)
+model: inherit
+# effort: high
+argument-hint: "[arg]"
+context: fork
+agent: general-purpose
+disable-model-invocation: false
+user-invocable: true
+
+# Enterprise discovery (optional)
+compatible-with: claude-code, codex, openclaw
+tags: [devops, automation]
+---
+```
+
+### Valid Tools for `allowed-tools`
+
+`Read`, `Write`, `Edit`, `Bash`, `Glob`, `Grep`, `WebFetch`, `WebSearch`, `Task`, `TodoWrite`, `NotebookEdit`, `AskUserQuestion`, `Skill`
+
+MCP tools use `ServerName:tool_name` format.
+
+Bash scoping patterns:
+```yaml
+Bash(git:*)       # All git commands
+Bash(npm:*)       # All npm commands
+Bash(python:*)    # All python commands
+Bash(mkdir:*)     # Directory creation
+```
 
 ---
 
-## 2. Directory Structure
+## 2. Agent Frontmatter (14 Anthropic fields)
+
+Agents live in `agents/*.md` and use a different frontmatter schema than skills.
+
+### Agent Fields
+
+| Field | Type | Required | Constraints |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Agent identifier |
+| `description` | string | Yes | 20-200 chars, agent's specialty |
+| `model` | string | No | `sonnet`, `haiku`, `opus`, `inherit`, or full model ID |
+| `effort` | string | No | `low`, `medium`, `high`, `max` |
+| `maxTurns` | integer | No | Max agentic loop iterations |
+| `tools` | string | No | Comma-separated allowed tools |
+| `disallowedTools` | string | No | Comma-separated denied tools (denylist) |
+| `skills` | array | No | Skill names to preload into subagent context |
+| `mcpServers` | object\|array | No | MCP server configuration |
+| `hooks` | object | No | Lifecycle hooks |
+| `memory` | string | No | `user`, `project`, or `local` |
+| `background` | boolean | No | Run in background |
+| `isolation` | string | No | `worktree` only |
+| `permissionMode` | string | No | `default`, `acceptEdits`, `dontAsk`, `bypassPermissions`, `plan` |
+
+### Key Differences from Skills
+
+- Agents use `disallowedTools` (denylist) while skills use `allowed-tools` (allowlist)
+- `effort` and `maxTurns` control autonomous iteration behavior (agent-only semantics)
+- Agents support `mcpServers`, `memory`, `background`, `isolation`, and `permissionMode`
+
+### Plugin Agent Restrictions
+
+When agents are distributed inside plugins, these fields are NOT supported:
+- `hooks`
+- `mcpServers`
+- `permissionMode`
+
+---
+
+## 3. Plugin.json Schema (15 fields)
+
+Every plugin requires `.claude-plugin/plugin.json`. Only `name` is required.
+
+| Field | Type | Required | Purpose |
+|-------|------|----------|---------|
+| `name` | string | Yes | Plugin identifier |
+| `version` | string | No | Semver version |
+| `description` | string | No | Plugin description |
+| `author` | object | No | `{name, email, url}` |
+| `homepage` | string | No | Plugin homepage URL |
+| `repository` | string | No | Source repository URL |
+| `license` | string | No | SPDX identifier |
+| `keywords` | array | No | Discovery keywords |
+| `commands` | object | No | Command definitions |
+| `agents` | object | No | Agent definitions |
+| `skills` | object | No | Skill definitions |
+| `hooks` | object | No | Plugin-level lifecycle hooks |
+| `mcpServers` | object | No | MCP server configuration |
+| `outputStyles` | object | No | Output formatting rules |
+| `lspServers` | object | No | Language server configuration |
+
+**CI enforcement**: Only these 15 fields are allowed. CI rejects any others.
+
+### Plugin Directory Structure (Anthropic Official)
+
+```
+plugin-root/
+├── .claude-plugin/plugin.json    # Required — plugin manifest
+├── commands/                     # Slash commands (*.md with YAML frontmatter)
+├── agents/                       # Custom agents (*.md with YAML frontmatter)
+├── skills/
+│   └── skill-name/
+│       └── SKILL.md              # Auto-activating skill
+├── hooks/hooks.json              # Lifecycle hooks configuration
+├── .mcp.json                     # MCP server declarations
+├── .lsp.json                     # LSP server declarations
+├── settings.json                 # Plugin settings
+├── scripts/                      # Executable automation code
+├── LICENSE                       # License file
+└── CHANGELOG.md                  # Version history
+```
+
+### Skill Subdirectory Structure
 
 ```
 skill-name/
-├── SKILL.md           # Required - frontmatter + instructions
-├── scripts/           # Optional - executable automation code
-├── references/        # Optional - documentation loaded on demand
-├── templates/         # Optional - boilerplate files for generation
-└── assets/            # Optional - static resources (images, configs)
+├── SKILL.md           # Required — frontmatter + instructions
+├── scripts/           # Optional — executable automation code
+├── references/        # Optional — documentation loaded on demand
+├── templates/         # Optional — boilerplate files for generation
+└── assets/            # Optional — static resources (images, configs)
 ```
-
-### Path Conventions
-
-- **`${CLAUDE_SKILL_DIR}`** - resolves to the skill's root directory at runtime (2026 standard)
-- **`{baseDir}`** - legacy alias, still works in Claude Code
-- All internal references SHOULD use `${CLAUDE_SKILL_DIR}/` prefix
-- One-level-deep file references only (no `{baseDir}/references/subdir/file.md`)
-- No absolute paths (`/home/...`, `/Users/...`, `C:\...`)
-- No path escapes (`{baseDir}/../other-skill/`)
-- No Windows-style paths (`C:\Users\...`)
-
-### File Loading
-
-| Location | When Loaded | Token Impact |
-|----------|-------------|--------------|
-| Frontmatter (`name`, `description`) | Always (startup) | ~100 tokens per skill |
-| SKILL.md body | When skill activates | Full body loaded |
-| `references/` files | When explicitly referenced | On-demand via Read tool |
-| `scripts/` files | When executed | Via Bash tool |
-| `templates/` files | When skill generates from them | Via Read tool |
-| `assets/` files | When referenced | On-demand |
 
 ---
 
-## 3. Progressive Disclosure (Three Levels)
+## 4. Progressive Disclosure (Three Levels)
 
 Skills use progressive disclosure to minimize context window usage.
 
@@ -106,7 +216,7 @@ Skills use progressive disclosure to minimize context window usage.
 ### Level 2: SKILL.md Body (<5000 tokens / <500 lines)
 - Full instruction body loaded when skill activates
 - Contains workflow steps, examples, edge cases
-- Keep concise - Claude is already capable
+- Keep concise — Claude is already capable
 
 ### Level 3: Bundled Resources (unlimited)
 - `references/`, `scripts/`, `templates/`, `assets/`
@@ -122,18 +232,18 @@ Skills use progressive disclosure to minimize context window usage.
 
 ---
 
-## 4. Description Writing Rules
+## 5. Description Writing Rules
 
 The description is the most important field. It determines when and whether the skill activates.
 
 ### Requirements
 
-1. **Third person always** - "Generates reports..." not "I generate..." or "You can generate..."
-2. **What + When** - Include both what it does AND when to use it
-3. **Specific keywords** - Use discovery-relevant terms the model will match on
-4. **Action verbs** - Start with or include: analyze, create, generate, build, debug, optimize, validate, deploy, configure, process
-5. **No first person** - Never "I can", "I will", "I help", "I'm"
-6. **No second person** - Never "You can", "You should", "You will"
+1. **Third person always** — "Generates reports..." not "I generate..." or "You can generate..."
+2. **What + When** — Include both what it does AND when to use it
+3. **Specific keywords** — Use discovery-relevant terms the model will match on
+4. **Action verbs** — Start with or include: analyze, create, generate, build, debug, optimize, validate, deploy, configure, process
+5. **No first person** — Never "I can", "I will", "I help", "I'm"
+6. **No second person** — Never "You can", "You should", "You will"
 
 ### Recommended Pattern
 
@@ -179,7 +289,7 @@ description: "A helpful tool for documents"
 
 ---
 
-## 5. Core Principles (Anthropic Official)
+## 6. Core Principles (Anthropic Official)
 
 ### Concise is Key
 Claude is already smart. Don't over-explain. Provide:
@@ -195,7 +305,7 @@ Skills have three levels of constraint:
 | Level | Description | When to Use |
 |-------|-------------|-------------|
 | **High** | Loose guidance, Claude decides specifics | Creative tasks, analysis, open-ended work |
-| **Medium** | Defined structure with flexible content | Most skills - defined workflow, flexible execution |
+| **Medium** | Defined structure with flexible content | Most skills — defined workflow, flexible execution |
 | **Low** | Strict templates, exact output format | Compliance, API calls, deterministic output |
 
 Choose the right level. Over-constraining wastes tokens and fights Claude's capabilities.
@@ -224,7 +334,6 @@ Skills frequently undertrigger because descriptions are too passive. Use aggress
 ### No Time-Sensitive Information
 - Don't include dates, versions, or URLs that change
 - Reference tools by name, not version
-- Use `compatibility` field for environment requirements
 
 ### Consistent Terminology
 - Pick terms and stick with them throughout
@@ -233,26 +342,30 @@ Skills frequently undertrigger because descriptions are too passive. Use aggress
 
 ---
 
-## 6. Body Content Guidelines
+## 7. Body Content Guidelines
 
 ### Format
 
-- **No mandatory format** - Anthropic explicitly states "no format restrictions"
+- **No mandatory format** — Anthropic explicitly states "no format restrictions"
 - Recommended but not required: Instructions, Examples, Edge Cases
 - Single H1 heading for the skill title
 - Keep under 500 lines total
 - Markdown formatting (headers, lists, code blocks, tables)
 
-### Recommended Sections
+### Required Sections (Enterprise)
+
+Enterprise-grade skills should include these 7 sections:
 
 | Section | Purpose | Notes |
 |---------|---------|-------|
-| Title (`# Name`) | Identify the skill | Required - single H1 |
-| Brief description | What this does | 1-2 sentences |
-| Instructions | Step-by-step workflow | Numbered steps or sub-headers |
-| Examples | Concrete input/output | At least 1, ideally 2-3 |
-| Edge cases | What to watch for | Common pitfalls |
-| Resources | Links to bundled files | `{baseDir}/` paths |
+| **Title** (`# Name`) | Identify the skill | Required — single H1 |
+| **Overview** | What this does | 1-2 sentences |
+| **Prerequisites** | Tools, runtimes, env needed | List dependencies |
+| **Instructions** | Step-by-step workflow | Numbered steps or sub-headers |
+| **Output** | Expected deliverables | What the skill produces |
+| **Error Handling** | Failure modes and recovery | Common errors + fixes |
+| **Examples** | Concrete input/output | At least 1, ideally 2-3 |
+| **Resources** | Links to bundled files | `${CLAUDE_SKILL_DIR}/` paths |
 
 ### Content Quality
 
@@ -265,7 +378,7 @@ Skills frequently undertrigger because descriptions are too passive. Use aggress
 
 ---
 
-## 7. String Substitutions (Claude Code)
+## 8. String Substitutions
 
 Available in SKILL.md body for dynamic content:
 
@@ -275,7 +388,17 @@ Available in SKILL.md body for dynamic content:
 | `$ARGUMENTS[0]`, `$ARGUMENTS[1]`, ... | Specific positional argument |
 | `$0`, `$1`, `$2`, ... | Shorthand for `$ARGUMENTS[N]` |
 | `${CLAUDE_SESSION_ID}` | Current session identifier |
-| `` !`command` `` | Dynamic context injection - runs command, injects output |
+| `` !`command` `` | Dynamic context injection — runs command, injects output |
+
+### Path Variables
+
+| Variable | Context | Purpose |
+|----------|---------|---------|
+| `${CLAUDE_SKILL_DIR}` | Bash/DCI in skills | Resolves to skill's root directory |
+| `${CLAUDE_PLUGIN_ROOT}` | Hooks, plugin-level | Resolves to plugin root directory |
+| `${CLAUDE_PLUGIN_DATA}` | Persistent state | Survives updates/reinstalls (v2.1.78+) |
+
+Relative markdown links (`[API Reference](reference.md)`) work without path variables — Claude follows these with the Read tool on demand.
 
 ### Usage Examples
 
@@ -306,14 +429,6 @@ Session tracking: ${CLAUDE_SESSION_ID}
 - Keep injections small — summaries and version info, not full file contents
 - For skills that typically run 3+ discovery commands first, DCI saves those entire tool call rounds
 
-Example `## Current State` section:
-```markdown
-## Current State
-!`git status --short`
-!`git log --oneline -5`
-!`node -v 2>/dev/null || echo 'N/A'`
-```
-
 ### Notes
 
 - `$ARGUMENTS` is empty string if no arguments provided
@@ -323,74 +438,74 @@ Example `## Current State` section:
 
 ---
 
-## 8. Skill Patterns
+## 9. Skill Patterns
 
 ### Script Automation
 Deterministic scripts that solve specific problems.
 ```
-skill activates → runs script → returns result
+skill activates -> runs script -> returns result
 ```
 Best for: file conversion, data transformation, API calls.
 
 ### Read-Process-Write
 Format conversion and transformation pipeline.
 ```
-read input → process/transform → write output
+read input -> process/transform -> write output
 ```
 Best for: document conversion, code generation, data formatting.
 
 ### Search-Analyze-Report
 Codebase analysis and reporting.
 ```
-search codebase → analyze findings → generate report
+search codebase -> analyze findings -> generate report
 ```
 Best for: code review, security audit, dependency analysis.
 
 ### Template-Based Generation
 Generate output from templates with variable substitution.
 ```
-load template → fill variables → validate → output
+load template -> fill variables -> validate -> output
 ```
 Best for: boilerplate generation, project scaffolding, config files.
 
 ### Wizard-Style Workflow
 Interactive multi-step gathering with AskUserQuestion.
 ```
-ask question → gather input → ask more → generate result
+ask question -> gather input -> ask more -> generate result
 ```
 Best for: complex configuration, multi-option setup.
 
 ### Conditional Workflow
 Branch based on input or context.
 ```
-analyze input → choose path → execute branch → output
+analyze input -> choose path -> execute branch -> output
 ```
 Best for: skills that handle multiple related tasks.
 
 ### Plan-Validate-Execute
 Verifiable intermediates with feedback loops.
 ```
-plan steps → validate plan → execute → verify each step → report
+plan steps -> validate plan -> execute -> verify each step -> report
 ```
 Best for: deployment, migration, refactoring tasks.
 
 ### Visual Output Generation
 Generate HTML or visual artifacts.
 ```
-gather data → generate HTML → render preview
+gather data -> generate HTML -> render preview
 ```
 Best for: dashboards, reports, documentation sites.
 
 ---
 
-## 9. Anti-Patterns
+## 10. Anti-Patterns
 
 | Anti-Pattern | Why It's Bad | Fix |
 |-------------|-------------|-----|
-| Windows-style paths | Not portable | Use `{baseDir}/` or Unix paths |
+| Windows-style paths | Not portable | Use `${CLAUDE_SKILL_DIR}/` or Unix paths |
 | Too many options without defaults | Analysis paralysis | Provide sensible defaults |
 | Deeply nested references (>1 level) | Loading failures | Flatten to one level |
-| Assuming tools are installed | Runtime failures | Check or use `compatibility` field |
+| Assuming tools are installed | Runtime failures | Note requirements in description or body |
 | Over-verbose explanations | Wastes tokens, Claude is smart | Be concise |
 | Vague descriptions | Poor discovery, wrong activation | Specific keywords + what/when |
 | Time-sensitive information | Goes stale | Use generic references |
@@ -400,12 +515,15 @@ Best for: dashboards, reports, documentation sites.
 | Mandatory format enforcement | Fights Anthropic guidance | Recommend, don't require |
 | Unscoped Bash in allowed-tools | Security risk | Use `Bash(git:*)` patterns |
 | Voodoo constants | Unmaintainable | Document why each value exists |
+| Using `compatibility` field | Not in Anthropic spec | Note requirements in body or description |
+| Using `metadata` field | Not in Anthropic spec | Use top-level fields instead |
+| Using `capabilities` / `expertise_level` | Invented fields, not in any spec | Remove entirely |
 
 ---
 
-## 10. Validation Checklist (Anthropic Official + Enterprise)
+## 11. Validation Checklist
 
-### Core Quality
+### Core Quality (Anthropic Standard)
 
 - [ ] `name` is kebab-case, 1-64 chars, matches directory name
 - [ ] `description` is specific with key terms for discovery
@@ -418,13 +536,14 @@ Best for: dashboards, reports, documentation sites.
 - [ ] Concrete examples (not abstract descriptions)
 - [ ] File references one level deep only
 - [ ] Clear workflow steps in instructions
+- [ ] No invalid fields (`compatibility`, `metadata`, `capabilities`, `expertise_level`, `activation_priority`, `when_to_use`, `mode`)
 
 ### Code/Scripts Quality
 
 - [ ] Scripts solve problems (don't punt to Claude)
 - [ ] Explicit error handling in scripts
 - [ ] No voodoo constants (all values justified)
-- [ ] Required packages/tools listed or in `compatibility`
+- [ ] Required packages/tools documented
 - [ ] Scripts documented with usage comments
 - [ ] No Windows paths in scripts
 - [ ] Validation/verification steps included
@@ -443,11 +562,12 @@ Best for: dashboards, reports, documentation sites.
 - [ ] `allowed-tools` scoped (Bash specifically)
 - [ ] Error handling section or guidance included
 - [ ] Resources section references all bundled files
-- [ ] `${CLAUDE_SKILL_DIR}` (or `{baseDir}`) used for all internal paths
+- [ ] `${CLAUDE_SKILL_DIR}` used for all internal paths
+- [ ] All 7 required body sections present (Title, Overview, Prerequisites, Instructions, Output, Error Handling, Examples)
 
 ---
 
-## 11. MCP Tool References
+## 12. MCP Tool References
 
 Skills can reference MCP (Model Context Protocol) tools:
 
@@ -459,7 +579,7 @@ Format: `ServerName:tool_name` where ServerName matches the MCP server configura
 
 ---
 
-## 12. Token Budget
+## 13. Token Budget
 
 The skill list (all descriptions) loads into Claude's system prompt at startup.
 

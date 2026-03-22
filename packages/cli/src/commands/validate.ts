@@ -28,6 +28,10 @@ export async function validateCommand(
   targetPath: string | undefined,
   options: ValidateOptions
 ): Promise<void> {
+  // Deprecation notice: universal validator is the source of truth
+  console.log(chalk.yellow('Note: For authoritative validation, use: python3 scripts/validate-skills-schema.py --enterprise'));
+  console.log('');
+
   // Determine base directory
   let baseDir: string;
 

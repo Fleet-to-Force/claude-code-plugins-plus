@@ -10,7 +10,8 @@ allowed-tools: Read, Bash(grep:*), Bash(curl:*), Bash(tar:*), Grep
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Debug Bundle
 
@@ -20,7 +21,7 @@ compatible-with: claude-code, codex, openclaw
 !`uname -a`
 
 ## Overview
-Collect all necessary diagnostic information for Retell AI support tickets.
+Collect all necessary diagnostic information for Retell AI support tickets. Creates a compressed archive containing environment versions, SDK details, redacted logs, sanitized configuration, and network connectivity results for efficient escalation.
 
 ## Prerequisites
 - Retell AI SDK installed

@@ -10,12 +10,13 @@ allowed-tools: Read, Grep, Bash(kubectl:*), Bash(curl:*), Bash(tcpdump:*)
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Advanced Troubleshooting
 
 ## Overview
-Deep debugging techniques for complex Retell AI issues that resist standard troubleshooting.
+Deep debugging techniques for complex Retell AI issues that resist standard troubleshooting. Covers systematic layer-by-layer isolation (network, DNS, TLS, auth, API, parsing), timing analysis for latency anomalies, memory leak detection, race condition identification, and structured support escalation with evidence bundles.
 
 ## Prerequisites
 - Access to production logs and metrics
@@ -23,228 +24,36 @@ Deep debugging techniques for complex Retell AI issues that resist standard trou
 - Network capture tools available
 - Understanding of distributed tracing
 
-## Evidence Collection Framework
-
-### Comprehensive Debug Bundle
-```bash
-#!/bin/bash
-set -euo pipefail
-# advanced-retellai-debug.sh
-
-BUNDLE="retellai-advanced-debug-$(date +%Y%m%d-%H%M%S)"
-mkdir -p "$BUNDLE"/{logs,metrics,network,config,traces}
-
-# 1. Extended logs (1 hour window)
-kubectl logs -l app=retellai-integration --since=1h > "$BUNDLE/logs/pods.log"
-journalctl -u retellai-service --since "1 hour ago" > "$BUNDLE/logs/system.log"
-
-# 2. Metrics dump
-curl -s localhost:9090/api/v1/query?query=retellai_requests_total > "$BUNDLE/metrics/requests.json"  # 9090: Prometheus port
-curl -s localhost:9090/api/v1/query?query=retellai_errors_total > "$BUNDLE/metrics/errors.json"  # Prometheus port
-
-# 3. Network capture (30 seconds)
-timeout 30 tcpdump -i any port 443 -w "$BUNDLE/network/capture.pcap" &  # 443: HTTPS port
-
-# 4. Distributed traces
-curl -s localhost:16686/api/traces?service=retellai > "$BUNDLE/traces/jaeger.json"  # 16686: Jaeger UI port
-
-# 5. Configuration state
-kubectl get cm retellai-config -o yaml > "$BUNDLE/config/configmap.yaml"
-kubectl get secret retellai-secrets -o yaml > "$BUNDLE/config/secrets-redacted.yaml"
-
-tar -czf "$BUNDLE.tar.gz" "$BUNDLE"
-echo "Advanced debug bundle: $BUNDLE.tar.gz"
-```
-
-## Systematic Isolation
-
-### Layer-by-Layer Testing
-
-```typescript
-// Test each layer independently
-async function diagnoseRetell AIIssue(): Promise<DiagnosisReport> {
-  const results: DiagnosisResult[] = [];
-
-  // Layer 1: Network connectivity
-  results.push(await testNetworkConnectivity());
-
-  // Layer 2: DNS resolution
-  results.push(await testDNSResolution('api.retellai.com'));
-
-  // Layer 3: TLS handshake
-  results.push(await testTLSHandshake('api.retellai.com'));
-
-  // Layer 4: Authentication
-  results.push(await testAuthentication());
-
-  // Layer 5: API response
-  results.push(await testAPIResponse());
-
-  // Layer 6: Response parsing
-  results.push(await testResponseParsing());
-
-  return { results, firstFailure: results.find(r => !r.success) };
-}
-```
-
-### Minimal Reproduction
-
-```typescript
-// Strip down to absolute minimum
-async function minimalRepro(): Promise<void> {
-  // 1. Fresh client, no customization
-  const client = new RetellAIClient({
-    apiKey: process.env.RETELLAI_API_KEY!,
-  });
-
-  // 2. Simplest possible call
-  try {
-    const result = await client.ping();
-    console.log('Ping successful:', result);
-  } catch (error) {
-    console.error('Ping failed:', {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-    });
-  }
-}
-```
-
-## Timing Analysis
-
-```typescript
-class TimingAnalyzer {
-  private timings: Map<string, number[]> = new Map();
-
-  async measure<T>(label: string, fn: () => Promise<T>): Promise<T> {
-    const start = performance.now();
-    try {
-      return await fn();
-    } finally {
-      const duration = performance.now() - start;
-      const existing = this.timings.get(label) || [];
-      existing.push(duration);
-      this.timings.set(label, existing);
-    }
-  }
-
-  report(): TimingReport {
-    const report: TimingReport = {};
-    for (const [label, times] of this.timings) {
-      report[label] = {
-        count: times.length,
-        min: Math.min(...times),
-        max: Math.max(...times),
-        avg: times.reduce((a, b) => a + b, 0) / times.length,
-        p95: this.percentile(times, 95),
-      };
-    }
-    return report;
-  }
-}
-```
-
-## Memory and Resource Analysis
-
-```typescript
-// Detect memory leaks in Retell AI client usage
-const heapUsed: number[] = [];
-
-setInterval(() => {
-  const usage = process.memoryUsage();
-  heapUsed.push(usage.heapUsed);
-
-  // Alert on sustained growth
-  if (heapUsed.length > 60) { // 1 hour at 1/min
-    const trend = heapUsed[59] - heapUsed[0];
-    if (trend > 100 * 1024 * 1024) { // 100MB growth  # 1024: 1 KB
-      console.warn('Potential memory leak in retellai integration');
-    }
-  }
-}, 60000);  # 60000: 1 minute in ms
-```
-
-## Race Condition Detection
-
-```typescript
-// Detect concurrent access issues
-class Retell AIConcurrencyChecker {
-  private inProgress: Set<string> = new Set();
-
-  async execute<T>(key: string, fn: () => Promise<T>): Promise<T> {
-    if (this.inProgress.has(key)) {
-      console.warn(`Concurrent access detected for ${key}`);
-    }
-
-    this.inProgress.add(key);
-    try {
-      return await fn();
-    } finally {
-      this.inProgress.delete(key);
-    }
-  }
-}
-```
-
-## Support Escalation Template
-
-```markdown
-## Retell AI Support Escalation
-
-**Severity:** P[1-4]
-**Request ID:** [from error response]
-**Timestamp:** [ISO 8601]  # 8601 = configured value
-
-### Issue Summary
-[One paragraph description]
-
-### Steps to Reproduce
-1. [Step 1]
-2. [Step 2]
-
-### Expected vs Actual
-- Expected: [behavior]
-- Actual: [behavior]
-
-### Evidence Attached
-- [ ] Debug bundle (retellai-advanced-debug-*.tar.gz)
-- [ ] Minimal reproduction code
-- [ ] Timing analysis
-- [ ] Network capture (if relevant)
-
-### Workarounds Attempted
-1. [Workaround 1] - Result: [outcome]
-2. [Workaround 2] - Result: [outcome]
-```
-
 ## Instructions
 
 ### Step 1: Collect Evidence Bundle
-Run the comprehensive debug script to gather all relevant data.
+Run the comprehensive debug script to gather logs, metrics, network captures, traces, and configuration state. See [debug techniques](references/debug-techniques.md) for the full collection script.
 
 ### Step 2: Systematic Isolation
-Test each layer independently to identify the failure point.
+Test each layer independently to identify the failure point. The six-layer test covers network connectivity, DNS resolution, TLS handshake, authentication, API response, and response parsing. Full implementation in [debug techniques](references/debug-techniques.md).
 
 ### Step 3: Create Minimal Reproduction
-Strip down to the simplest failing case.
+Strip down to the simplest failing case. Use a fresh client instance with no customization and the simplest possible API call to confirm the issue is reproducible outside the application context.
 
-### Step 4: Escalate with Evidence
-Use the support template with all collected evidence.
+### Step 4: Analyze Timing and Resources
+Attach the `TimingAnalyzer` to measure latency at each stage. Check for memory leaks by tracking heap usage over time. Detect race conditions with concurrency checkers. All patterns available in [debug techniques](references/debug-techniques.md).
+
+### Step 5: Escalate with Evidence
+Use the support escalation template with all collected evidence. Include severity level, request IDs, timestamps, steps to reproduce, and workarounds already attempted.
 
 ## Output
-- Comprehensive debug bundle collected
-- Failure layer identified
-- Minimal reproduction created
-- Support escalation submitted
+- Comprehensive debug bundle collected with logs, metrics, and traces
+- Failure layer identified through systematic isolation
+- Minimal reproduction created for support team
+- Support escalation submitted with structured evidence
 
 ## Error Handling
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| Can't reproduce | Race condition | Add timing analysis |
-| Intermittent failure | Timing-dependent | Increase sample size |
-| No useful logs | Missing instrumentation | Add debug logging |
-| Memory growth | Resource leak | Use heap profiling |
+| Cannot reproduce | Race condition | Add timing analysis, increase sample size |
+| Intermittent failure | Timing-dependent | Collect metrics over longer window |
+| No useful logs | Missing instrumentation | Add structured debug logging |
+| Memory growth | Resource leak | Use heap profiling at 1-minute intervals |
 
 ## Examples
 
@@ -255,9 +64,11 @@ set -euo pipefail
 curl -v https://api.retellai.com/health 2>&1 | grep -E "(Connected|TLS|HTTP)"
 ```
 
+For complete debug scripts, timing analysis, race condition detection, and escalation templates, see [debug techniques](references/debug-techniques.md).
+
 ## Resources
 - [Retell AI Support Portal](https://support.retellai.com)
 - [Retell AI Status Page](https://status.retellai.com)
 
 ## Next Steps
-For load testing, see `retellai-load-scale`.
+For load testing after resolving issues, see `retellai-load-scale`. For common error quick-fixes, start with `retellai-common-errors` before escalating to advanced techniques.

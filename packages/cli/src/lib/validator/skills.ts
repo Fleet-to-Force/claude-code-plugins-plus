@@ -6,6 +6,8 @@
  * - Intent Solutions Enterprise Standards
  */
 
+/** @deprecated Use scripts/validate-skills-schema.py (universal validator v5.0) instead. This file is kept for ccpi backward compatibility only. */
+
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import * as yaml from 'yaml';

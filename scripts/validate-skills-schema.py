@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Claude Code Plugin Validator v4.0 (Two-Tier: Standard + Enterprise)
+Claude Code Plugin Validator v5.0 (Universal: Schema Registry + Anthropic Alignment)
 
 Unified validator for all Claude Code plugin content:
 - SKILL.md files (Agent Skills)
@@ -8,15 +8,13 @@ Unified validator for all Claude Code plugin content:
 - agents/*.md files (Custom Agents)
 
 Two-tier validation system:
-- Standard (DEFAULT): Anthropic spec only. No required fields. description recommended.
-  Body has no required format. "Use when"/"Trigger with" are INFO only.
-- Enterprise: Intent Solutions marketplace. 100-point rubric. version/author/license/
-  allowed-tools scored as WARNINGS (not errors). Body sections scored as WARNINGS.
+- Standard (DEFAULT): Anthropic spec only. Validates field types and values.
+- Enterprise: Intent Solutions marketplace. All 8 core fields required as ERRORS.
+  7 body sections required. 100-point rubric with Anthropic schema registry.
 - Auto-detect: if CI=true or GITHUB_ACTIONS=true → enterprise by default.
 
-Combines:
+Schema registry derived from:
 - Anthropic 2026 Skills Specification (code.claude.com/docs/en/skills)
-- Lee Han Chung Deep Dive (leehanchung.github.io)
 - Intent Solutions 100-Point Grading Rubric
 
 Usage:
@@ -29,7 +27,7 @@ Usage:
     python scripts/validate-skills-schema.py path/to/SKILL.md           # Single-file mode
 
 Author: Jeremy Longshore <jeremy@intentsolutions.io>
-Version: 4.0.0
+Version: 5.0.0
 """
 
 import argparse
@@ -65,24 +63,17 @@ VALID_TOOLS = {
 STANDARD_REQUIRED = set()
 STANDARD_RECOMMENDED = {'description'}
 
-# Enterprise tier: scored fields (warnings, not errors)
+# Enterprise tier: use ALWAYS_REQUIRED (defined in schema registry below)
+# ENTERPRISE_RECOMMENDED is a backward-compat alias — do not use for new code
 ENTERPRISE_RECOMMENDED = {'name', 'description', 'allowed-tools', 'version', 'author', 'license'}
 
 # Legacy aliases for backward compat in grading functions
 ANTHROPIC_REQUIRED = set()  # Nothing required per spec
-ENTERPRISE_REQUIRED = set()  # Now warnings, not requirements
-REQUIRED_FIELDS = set()  # Empty — nothing is a hard requirement
-
-# Optional fields per Anthropic spec + AgentSkills.io
-OPTIONAL_FIELDS = {
-    'name', 'description', 'allowed-tools', 'version', 'author', 'license',
-    'model', 'disable-model-invocation', 'mode', 'tags', 'metadata', 'compatible-with',
-    'argument-hint', 'context', 'agent', 'user-invocable', 'hooks', 'compatibility',
-    'effort',
-}
+ENTERPRISE_REQUIRED = set()  # Now errors via ALWAYS_REQUIRED
+REQUIRED_FIELDS = set()  # Empty — nothing is a hard requirement at standard tier
 
 # Deprecated fields (warn but don't error)
-DEPRECATED_FIELDS = {'when_to_use'}
+DEPRECATED_FIELDS = {'when_to_use', 'mode'}
 
 # Recommended sections (best practices, not mandated by any published standard)
 RECOMMENDED_SECTIONS = [
@@ -118,6 +109,142 @@ ABSOLUTE_PATH_PATTERNS = [
     (re.compile(r"/Users/\w+/"), "/Users/..."),
     (re.compile(r"[A-Za-z]:\\\\Users\\\\", re.IGNORECASE), "C:\\\\Users\\\\..."),
 ]
+
+# === SCHEMA REGISTRY (Single Source of Truth) ===
+# Derived from Anthropic docs (code.claude.com/docs/en/skills), synced 2026-03-21
+
+SKILL_FIELDS = {
+    # Anthropic official (11 fields)
+    'name': {'type': 'string', 'source': 'anthropic', 'tier': 'standard'},
+    'description': {'type': 'string', 'source': 'anthropic', 'tier': 'standard'},
+    'allowed-tools': {'type': 'string', 'source': 'anthropic', 'tier': 'standard'},
+    'model': {'type': 'string', 'source': 'anthropic', 'tier': 'standard', 'valid': ['sonnet', 'haiku', 'opus', 'inherit']},
+    'effort': {'type': 'string', 'source': 'anthropic', 'tier': 'standard', 'valid': ['low', 'medium', 'high', 'max']},
+    'argument-hint': {'type': 'string', 'source': 'anthropic', 'tier': 'standard'},
+    'context': {'type': 'string', 'source': 'anthropic', 'tier': 'standard', 'valid': ['fork']},
+    'agent': {'type': 'string', 'source': 'anthropic', 'tier': 'standard'},
+    'user-invocable': {'type': 'boolean', 'source': 'anthropic', 'tier': 'standard', 'default': True},
+    'disable-model-invocation': {'type': 'boolean', 'source': 'anthropic', 'tier': 'standard', 'default': False},
+    'hooks': {'type': 'object', 'source': 'anthropic', 'tier': 'standard'},
+    # Enterprise additions (5 fields)
+    'version': {'type': 'string', 'source': 'enterprise', 'tier': 'enterprise'},
+    'author': {'type': 'string', 'source': 'enterprise', 'tier': 'enterprise'},
+    'license': {'type': 'string', 'source': 'enterprise', 'tier': 'enterprise'},
+    'compatible-with': {'type': 'string', 'source': 'enterprise', 'tier': 'enterprise'},
+    'tags': {'type': 'array', 'source': 'enterprise', 'tier': 'enterprise'},
+}
+
+AGENT_FIELDS = {
+    'name': {'type': 'string', 'source': 'anthropic', 'required': True},
+    'description': {'type': 'string', 'source': 'anthropic', 'required': True},
+    'model': {'type': 'string', 'source': 'anthropic', 'valid': ['sonnet', 'haiku', 'opus', 'inherit']},
+    'effort': {'type': 'string', 'source': 'anthropic', 'valid': ['low', 'medium', 'high', 'max']},
+    'maxTurns': {'type': 'integer', 'source': 'anthropic'},
+    'tools': {'type': 'string', 'source': 'anthropic'},
+    'disallowedTools': {'type': 'array', 'source': 'anthropic'},
+    'skills': {'type': 'array', 'source': 'anthropic'},
+    'mcpServers': {'type': 'object', 'source': 'anthropic'},
+    'hooks': {'type': 'object', 'source': 'anthropic'},
+    'memory': {'type': 'string', 'source': 'anthropic', 'valid': ['user', 'project', 'local']},
+    'background': {'type': 'boolean', 'source': 'anthropic'},
+    'isolation': {'type': 'string', 'source': 'anthropic', 'valid': ['worktree']},
+    'permissionMode': {'type': 'string', 'source': 'anthropic', 'valid': ['default', 'acceptEdits', 'dontAsk', 'bypassPermissions', 'plan']},
+}
+
+# Fields NOT supported in plugin agents (silently ignored by runtime)
+AGENT_PLUGIN_RESTRICTED = {'hooks', 'mcpServers', 'permissionMode'}
+
+# Fields that are NOT in Anthropic spec — ERROR if found
+INVALID_AGENT_FIELDS = {}  # Cleared — all non-standard fields demoted to deprecated for migration
+
+# Non-standard fields used across existing agents — WARN now, batch-fix, then promote to ERROR
+DEPRECATED_AGENT_FIELDS = {
+    'capabilities': 'Non-standard field. Not in Anthropic spec. Will be removed in future validation.',
+    'expertise_level': 'Non-standard field. Not in Anthropic spec. Will be removed in future validation.',
+    'activation_priority': 'Non-standard field. Not in Anthropic spec. Will be removed in future validation.',
+    'color': 'Non-standard field. Not in Anthropic spec. Will be removed in future validation.',
+    'activation_triggers': 'Non-standard field. Not in Anthropic spec. Will be removed in future validation.',
+    'type': 'Non-standard field. Not in Anthropic spec. Will be removed in future validation.',
+    'category': 'Non-standard field. Not in Anthropic spec. Will be removed in future validation.',
+}
+
+INVALID_SKILL_FIELDS = {
+    'compatibility': 'AgentSkills.io field, not Anthropic. Remove.',
+    'metadata': 'AgentSkills.io field, not Anthropic. Use top-level fields.',
+    'when_to_use': 'Deprecated. Move content to description field.',
+    'mode': 'Deprecated. Use disable-model-invocation instead.',
+}
+
+PLUGIN_JSON_FIELDS = {
+    'name': {'type': 'string', 'required': True},
+    'version': {'type': 'string'},
+    'description': {'type': 'string'},
+    'author': {'type': 'object'},
+    'homepage': {'type': 'string'},
+    'repository': {'type': 'string'},
+    'license': {'type': 'string'},
+    'keywords': {'type': 'array'},
+    'commands': {'type': 'string|array'},
+    'agents': {'type': 'string|array'},
+    'skills': {'type': 'string|array'},
+    'hooks': {'type': 'string|array|object'},
+    'mcpServers': {'type': 'string|array|object'},
+    'outputStyles': {'type': 'string|array'},
+    'lspServers': {'type': 'string|array|object'},
+}
+
+# Core fields always required at enterprise tier
+ALWAYS_REQUIRED = {'name', 'description', 'allowed-tools', 'version', 'author', 'license', 'compatible-with', 'tags'}
+
+# Conditional fields: required only when relevant
+CONDITIONAL_FIELDS = {
+    'context': lambda fm: fm.get('agent') is not None,
+    'agent': lambda fm: fm.get('context') == 'fork',
+    'argument-hint': lambda fm: fm.get('user-invocable', True) and not fm.get('disable-model-invocation', False),
+}
+
+# Facelift opportunities: optional fields that could improve the skill
+FACELIFT_FIELDS = {
+    'model': "Setting an explicit model prevents unexpected behavior when session model changes",
+    'effort': "Setting effort level optimizes reasoning for this skill's complexity",
+}
+
+
+def detect_component(path: Path) -> tuple:
+    """Auto-detect component type AND context.
+    Returns: (component_type, context)
+    - component_type: 'skill', 'agent', 'command', 'plugin', 'unknown'
+    - context: 'plugin', 'standalone', 'unknown'
+    """
+    component = 'unknown'
+
+    def find_plugin_root(p: Path):
+        for parent in [p] + list(p.parents):
+            if (parent / '.claude-plugin' / 'plugin.json').exists():
+                return parent
+        return None
+
+    plugin_root = find_plugin_root(path)
+    context = 'plugin' if plugin_root else 'standalone'
+
+    if path.is_dir():
+        if (path / '.claude-plugin' / 'plugin.json').exists():
+            component = 'plugin'
+        elif (path / 'SKILL.md').exists():
+            component = 'skill'
+    elif path.name == 'SKILL.md':
+        component = 'skill'
+    elif path.parent.name == 'agents':
+        component = 'agent'
+    elif path.parent.name == 'commands':
+        component = 'command'
+
+    return (component, context)
+
+
+# OPTIONAL_FIELDS: all fields recognized by the validator (from schema registry + deprecated)
+# Used for unknown-field detection. Defined here after SKILL_FIELDS is available.
+OPTIONAL_FIELDS = set(SKILL_FIELDS.keys()) | set(INVALID_SKILL_FIELDS.keys()) | DEPRECATED_FIELDS
 
 # Defaults
 DEFAULT_AUTHOR = "Jeremy Longshore <jeremy@intentsolutions.io>"
@@ -268,6 +395,15 @@ def score_ease_of_use(path: Path, body: str, fm: dict) -> dict:
         meta_notes.append("missing allowed-tools")
     if fm.get('author') and '@' in str(fm.get('author', '')):
         meta_score += 1
+    if fm.get('tags') and isinstance(fm.get('tags'), list) and len(fm['tags']) > 0:
+        meta_score += 1
+    else:
+        meta_notes.append("missing tags")
+    if fm.get('compatible-with'):
+        meta_score += 1
+    else:
+        meta_notes.append("missing compatible-with")
+    meta_score = min(meta_score, 10)
     breakdown['metadata_quality'] = (meta_score, ", ".join(meta_notes) if meta_notes else "Complete metadata")
 
     # Discoverability (6 pts)
@@ -422,7 +558,7 @@ def score_spec_compliance(path: Path, body: str, fm: dict) -> dict:
     # Frontmatter Validity (5 pts)
     fm_score = 5  # Start with full score
     fm_notes = []
-    required = {'name', 'description', 'allowed-tools', 'version', 'author', 'license'}
+    required = ALWAYS_REQUIRED
     missing = required - set(fm.keys())
     if missing:
         fm_score -= min(len(missing), 4)
@@ -479,7 +615,20 @@ def score_spec_compliance(path: Path, body: str, fm: dict) -> dict:
         opt_notes.append("optional fields ok")
     breakdown['optional_fields'] = (opt_score, ", ".join(opt_notes))
 
-    total = sum(v[0] for v in breakdown.values())
+    # Field Coverage (3 pts) — percentage of applicable fields present
+    all_applicable = set(SKILL_FIELDS.keys())
+    present_fields = set(fm.keys()) & all_applicable
+    coverage_pct = len(present_fields) / len(all_applicable) * 100 if all_applicable else 0
+    if coverage_pct >= 80:
+        breakdown['field_coverage'] = (3, f"Excellent: {len(present_fields)}/{len(all_applicable)} fields ({coverage_pct:.0f}%)")
+    elif coverage_pct >= 60:
+        breakdown['field_coverage'] = (2, f"Good: {len(present_fields)}/{len(all_applicable)} fields ({coverage_pct:.0f}%)")
+    elif coverage_pct >= 40:
+        breakdown['field_coverage'] = (1, f"Fair: {len(present_fields)}/{len(all_applicable)} fields ({coverage_pct:.0f}%)")
+    else:
+        breakdown['field_coverage'] = (0, f"Low: {len(present_fields)}/{len(all_applicable)} fields ({coverage_pct:.0f}%)")
+
+    total = min(sum(v[0] for v in breakdown.values()), 15)
     return {'score': total, 'max': 15, 'breakdown': breakdown}
 
 
@@ -595,10 +744,25 @@ def calculate_modifiers(path: Path, body: str, fm: dict) -> dict:
     if '<' in body and '>' in body and re.search(r'<[a-z]+>', body):
         modifiers['xml_tags'] = (-1, "XML-like tags in body")
 
+    # Stub penalty: body <30 lines with no code blocks and no references/ -3
+    skill_dir = path.parent
+    if lines < 30:
+        code_blocks = len(re.findall(r'```', body)) // 2
+        refs_dir = skill_dir / "references"
+        if code_blocks == 0 and not refs_dir.exists():
+            modifiers['stub_penalty'] = (-3, f"Stub skill: {lines} lines, no code blocks, no references/")
+
+    # Supporting files bonus: has references/ with real content +1
+    refs_dir = skill_dir / "references"
+    if refs_dir.exists():
+        ref_files = [f for f in refs_dir.glob("*.md") if f.stat().st_size > 100]
+        if ref_files:
+            modifiers['supporting_files'] = (+1, f"Has references/ with {len(ref_files)} substantial files")
+
     total = sum(v[0] for v in modifiers.values())
     # Cap modifiers at ±15
     total = max(-15, min(15, total))
-    return {'score': total, 'max_bonus': 5, 'max_penalty': -5, 'items': modifiers}
+    return {'score': total, 'max_bonus': 6, 'max_penalty': -7, 'items': modifiers}
 
 
 def grade_skill(path: Path, body: str, fm: dict) -> dict:
@@ -725,9 +889,7 @@ def validate_command(path: Path) -> Dict[str, Any]:
 
 # === AGENT VALIDATION ===
 
-VALID_EXPERTISE = ['intermediate', 'advanced', 'expert']
-VALID_PRIORITIES = ['low', 'medium', 'high', 'critical']
-VALID_EFFORT_LEVELS = ['low', 'medium', 'high']
+VALID_EFFORT_LEVELS = ['low', 'medium', 'high', 'max']
 
 
 def find_agent_files(root: Path) -> List[Path]:
@@ -742,13 +904,12 @@ def find_agent_files(root: Path) -> List[Path]:
 
 
 def validate_agent(path: Path) -> Dict[str, Any]:
-    """Validate an agent markdown file."""
+    """Validate an agent markdown file against Anthropic 2026 spec."""
     try:
         content = path.read_text(encoding='utf-8')
     except Exception as e:
         return {'fatal': f'Cannot read file: {e}'}
 
-    # Extract frontmatter
     m = RE_FRONTMATTER.match(content)
     if not m:
         return {'fatal': 'No frontmatter found'}
@@ -761,67 +922,77 @@ def validate_agent(path: Path) -> Dict[str, Any]:
     errors: List[str] = []
     warnings: List[str] = []
 
-    # Required: name
-    if 'name' not in fm:
-        errors.append("[agent] Missing required field: name")
-    else:
-        name = str(fm['name'])
-        if not re.match(r'^[a-z][a-z0-9-]*[a-z0-9]$', name) and len(name) > 1:
-            warnings.append("[agent] 'name' should be kebab-case")
+    # Detect context (plugin vs standalone)
+    _, context = detect_component(path)
+    is_plugin_agent = context == 'plugin'
 
-    # Required: description (20 chars min for agents)
-    if 'description' not in fm:
-        errors.append("[agent] Missing required field: description")
-    else:
-        desc = str(fm['description'])
+    # Required fields (Anthropic spec)
+    for field_name, field_def in AGENT_FIELDS.items():
+        if field_def.get('required') and field_name not in fm:
+            errors.append(f"[agent] Missing required field: {field_name}")
+
+    # Validate present fields against schema
+    for field_name, value in fm.items():
+        if field_name in AGENT_FIELDS:
+            field_def = AGENT_FIELDS[field_name]
+
+            # Type checking
+            expected_type = field_def.get('type')
+            if expected_type == 'string' and not isinstance(value, str):
+                errors.append(f"[agent] '{field_name}' must be a string, got: {type(value).__name__}")
+            elif expected_type == 'integer' and not isinstance(value, int):
+                errors.append(f"[agent] '{field_name}' must be an integer, got: {type(value).__name__}")
+            elif expected_type == 'boolean' and not isinstance(value, bool):
+                errors.append(f"[agent] '{field_name}' must be a boolean, got: {type(value).__name__}")
+            elif expected_type == 'array' and not isinstance(value, list):
+                errors.append(f"[agent] '{field_name}' must be an array, got: {type(value).__name__}")
+            elif expected_type == 'object' and not isinstance(value, dict):
+                errors.append(f"[agent] '{field_name}' must be an object, got: {type(value).__name__}")
+
+            # Value validation
+            if 'valid' in field_def and isinstance(value, str):
+                if value not in field_def['valid']:
+                    errors.append(f"[agent] '{field_name}' value '{value}' not valid. Must be one of: {', '.join(field_def['valid'])}")
+
+            # Plugin-restricted fields
+            if is_plugin_agent and field_name in AGENT_PLUGIN_RESTRICTED:
+                warnings.append(f"[agent] '{field_name}' is not supported in plugin agents (ignored by runtime)")
+
+        elif field_name in INVALID_AGENT_FIELDS:
+            errors.append(f"[agent] Invalid field '{field_name}': {INVALID_AGENT_FIELDS[field_name]}")
+        elif field_name in DEPRECATED_AGENT_FIELDS:
+            warnings.append(f"[agent] Deprecated field '{field_name}': {DEPRECATED_AGENT_FIELDS[field_name]}")
+        else:
+            warnings.append(f"[agent] Unknown field: '{field_name}'")
+
+    # Additional validation for specific fields
+    if 'name' in fm:
+        name = str(fm['name']).strip()
+        if not name:
+            errors.append("[agent] 'name' must be non-empty")
+        elif not re.match(r'^[a-z0-9]+(?:-[a-z0-9]+)*$', name):
+            warnings.append(f"[agent] 'name' should be kebab-case: {name}")
+
+    if 'description' in fm:
+        desc = str(fm['description']).strip()
         if len(desc) < 20:
             errors.append("[agent] 'description' must be at least 20 characters")
         if len(desc) > 200:
             warnings.append("[agent] 'description' should be 200 characters or less")
 
-    # Recommended: capabilities
-    if 'capabilities' not in fm:
-        warnings.append("[agent] Missing recommended field: capabilities")
-    elif not isinstance(fm['capabilities'], list):
-        warnings.append("[agent] 'capabilities' should be an array")
-    else:
-        caps = fm['capabilities']
-        if len(caps) < 2:
-            warnings.append("[agent] 'capabilities' should have at least 2 items")
-        if len(caps) > 10:
-            warnings.append("[agent] 'capabilities' should have 10 or fewer items")
-        for i, cap in enumerate(caps):
-            if not isinstance(cap, str):
-                errors.append(f"[agent] 'capabilities[{i}]' must be a string")
-
-    # Optional: expertise_level
-    if 'expertise_level' in fm:
-        if fm['expertise_level'] not in VALID_EXPERTISE:
-            warnings.append(f"[agent] Unknown expertise_level: {fm['expertise_level']}")
-
-    # Optional: activation_priority
-    if 'activation_priority' in fm:
-        if fm['activation_priority'] not in VALID_PRIORITIES:
-            warnings.append(f"[agent] Unknown activation_priority: {fm['activation_priority']}")
-
-    # Optional: effort (v2.1.78+ — controls model reasoning effort per turn)
-    if 'effort' in fm:
-        if fm['effort'] not in VALID_EFFORT_LEVELS:
-            warnings.append(f"[agent] Unknown effort level: {fm['effort']}. Must be one of: {', '.join(VALID_EFFORT_LEVELS)}")
-
-    # Optional: maxTurns (v2.1.78+ — caps agentic loop iterations)
-    if 'maxTurns' in fm:
-        if not isinstance(fm['maxTurns'], int) or fm['maxTurns'] < 1:
+    if 'maxTurns' in fm and isinstance(fm['maxTurns'], int):
+        if fm['maxTurns'] < 1:
             errors.append("[agent] 'maxTurns' must be a positive integer")
 
-    # Optional: disallowedTools (v2.1.78+ — denylist for agent tool access)
-    if 'disallowedTools' in fm:
-        if not isinstance(fm['disallowedTools'], list):
-            errors.append("[agent] 'disallowedTools' must be an array of strings")
-        else:
-            for i, tool in enumerate(fm['disallowedTools']):
-                if not isinstance(tool, str):
-                    errors.append(f"[agent] 'disallowedTools[{i}]' must be a string")
+    if 'disallowedTools' in fm and isinstance(fm['disallowedTools'], list):
+        for i, tool in enumerate(fm['disallowedTools']):
+            if not isinstance(tool, str):
+                errors.append(f"[agent] 'disallowedTools[{i}]' must be a string")
+
+    if 'skills' in fm and isinstance(fm['skills'], list):
+        for i, skill in enumerate(fm['skills']):
+            if not isinstance(skill, str):
+                errors.append(f"[agent] 'skills[{i}]' must be a string")
 
     return {'errors': errors, 'warnings': warnings, 'type': 'agent'}
 
@@ -949,11 +1120,17 @@ def validate_frontmatter(path: Path, fm: dict, tier: str = TIER_STANDARD) -> Tup
     metadata = fm.get('metadata', {}) if isinstance(fm.get('metadata'), dict) else {}
 
     if tier == TIER_ENTERPRISE:
-        for key in ENTERPRISE_RECOMMENDED:
+        for key in ALWAYS_REQUIRED:
             if key not in fm:
-                if key in ('author', 'version', 'license') and key in metadata:
-                    continue  # Found in metadata block — valid per spec
-                warnings.append(f"[frontmatter] Missing recommended field: '{key}' (enterprise)")
+                errors.append(f"[frontmatter] Missing required field: '{key}' (enterprise)")
+        # Conditional fields
+        for key, condition in CONDITIONAL_FIELDS.items():
+            if condition(fm) and key not in fm:
+                warnings.append(f"[frontmatter] Missing conditional field: '{key}' (relevant for this skill's configuration)")
+        # Facelift opportunities
+        for key, reason in FACELIFT_FIELDS.items():
+            if key not in fm:
+                infos.append(f"[frontmatter] Consider adding '{key}': {reason}")
     else:
         # Standard tier: only description is recommended
         if 'description' not in fm:
@@ -1128,12 +1305,6 @@ def validate_frontmatter(path: Path, fm: dict, tier: str = TIER_STANDARD) -> Tup
         if not isinstance(dmi, bool):
             errors.append(f"[frontmatter] 'disable-model-invocation' must be boolean, got: {type(dmi).__name__}")
 
-    # mode field
-    if 'mode' in fm:
-        mode = fm['mode']
-        if not isinstance(mode, bool):
-            errors.append(f"[frontmatter] 'mode' must be boolean, got: {type(mode).__name__}")
-
     # tags field
     if 'tags' in fm:
         tags = fm['tags']
@@ -1192,11 +1363,10 @@ def validate_frontmatter(path: Path, fm: dict, tier: str = TIER_STANDARD) -> Tup
         if not isinstance(hooks_val, dict):
             errors.append(f"[frontmatter] 'hooks' must be a mapping, got: {type(hooks_val).__name__}")
 
-    # compatibility field (AgentSkills.io environment requirements)
-    if 'compatibility' in fm:
-        compat_str = str(fm['compatibility']).strip()
-        if len(compat_str) > 500:
-            warnings.append("[frontmatter] 'compatibility' exceeds 500 chars")
+    # Invalid fields — ERROR
+    for field, message in INVALID_SKILL_FIELDS.items():
+        if field in fm:
+            errors.append(f"[frontmatter] Invalid field '{field}': {message}")
 
     # === DEPRECATED FIELDS ===
 
@@ -1206,10 +1376,10 @@ def validate_frontmatter(path: Path, fm: dict, tier: str = TIER_STANDARD) -> Tup
 
     # === UNKNOWN FIELDS ===
 
-    known_fields = OPTIONAL_FIELDS | DEPRECATED_FIELDS
+    known_fields = set(SKILL_FIELDS.keys()) | set(INVALID_SKILL_FIELDS.keys()) | DEPRECATED_FIELDS
     unknown_fields = set(fm.keys()) - known_fields
     for field in unknown_fields:
-        warnings.append(f"[frontmatter] Non-standard field: '{field}'")
+        errors.append(f"[frontmatter] Unknown field: '{field}' — not in Anthropic spec or enterprise extensions")
 
     return errors, warnings, infos
 
@@ -1228,9 +1398,11 @@ def validate_body(path: Path, body: str, tier: str = TIER_STANDARD, fm: dict = N
 
     # === LENGTH CHECKS ===
 
-    # Line limit (WARN in both tiers)
+    # Line limit
     if len(lines) > 500:
-        warnings.append(f"[body] SKILL.md body has {len(lines)} lines (max 500). Use progressive disclosure (extract to references/)")
+        errors.append(f"[body] SKILL.md body has {len(lines)} lines — exceeds Anthropic 500-line limit. Extract to references/")
+    elif len(lines) > 300:
+        warnings.append(f"[body] SKILL.md body has {len(lines)} lines (301-500 approaching limit). Consider extracting to references/")
 
     # Word count check
     word_count = len(body.split())
@@ -1269,10 +1441,10 @@ def validate_body(path: Path, body: str, tier: str = TIER_STANDARD, fm: dict = N
         for sec in RECOMMENDED_SECTIONS:
             if sec == "# ":
                 if not has_markdown_h1(body):
-                    warnings.append(f"[body] Recommended section missing: '{sec}' (best practice, not spec-mandated)")
+                    errors.append(f"[body] Required section missing: '{sec}' (enterprise tier)")
             else:
                 if not has_heading_line(body, sec):
-                    warnings.append(f"[body] Recommended section missing: '{sec}' (best practice, not spec-mandated)")
+                    errors.append(f"[body] Required section missing: '{sec}' (enterprise tier)")
 
     # === LEE HAN CHUNG: SECTION CONTENT MUST BE NON-EMPTY ===
 
@@ -2130,6 +2302,76 @@ def advise_dci_opportunities(path: Path, body: str) -> List[str]:
     return infos
 
 
+def validate_supporting_files(path: Path) -> Tuple[List[str], List[str]]:
+    """Check supporting file requirements for a skill.
+    - references/ directory must exist (enterprise)
+    - references/ must have content (not empty files)
+    - scripts/ must exist if SKILL.md uses ${CLAUDE_SKILL_DIR}/scripts/
+    """
+    errors: List[str] = []
+    warnings: List[str] = []
+    skill_dir = path.parent
+
+    refs_dir = skill_dir / "references"
+    if not refs_dir.exists():
+        warnings.append("[supporting] Missing references/ directory — create it for progressive disclosure")
+    elif refs_dir.exists():
+        ref_files = list(refs_dir.glob("*.md"))
+        if not ref_files:
+            warnings.append("[supporting] references/ directory is empty — add reference documents")
+        else:
+            for ref_file in ref_files:
+                if ref_file.stat().st_size == 0:
+                    warnings.append(f"[supporting] references/{ref_file.name} is empty (0 bytes)")
+
+    # Check for singular reference.md (anti-pattern)
+    if (skill_dir / "reference.md").exists():
+        errors.append("[supporting] Found 'reference.md' (singular) — rename to references/ directory with .md files inside")
+
+    return errors, warnings
+
+
+def detect_stub_skill(path: Path, body: str, fm: dict) -> Tuple[List[str], List[str]]:
+    """Detect if a SKILL.md is a stub (insufficient content).
+    A skill is a stub if ANY of:
+    - Body < 30 lines
+    - Zero code blocks AND zero markdown links to supporting files
+    - Description matches generic patterns
+    - No ## Instructions section
+    """
+    errors: List[str] = []
+    warnings: List[str] = []
+    lines = body.strip().splitlines()
+
+    # Skip stub detection for fork skills (they're intentionally minimal)
+    if fm.get('context') == 'fork':
+        return errors, warnings
+
+    stub_reasons = []
+
+    if len(lines) < 30:
+        stub_reasons.append(f"body is only {len(lines)} lines (minimum 30)")
+
+    code_blocks = len(re.findall(r'```', body)) // 2
+    md_links = len(re.findall(r'\[.*?\]\((?!https?://)[^)]+\)', body))
+    if code_blocks == 0 and md_links == 0:
+        stub_reasons.append("no code blocks and no relative links to supporting files")
+
+    desc = str(fm.get('description', '')).lower()
+    generic_patterns = ['a helpful tool', 'this skill provides', 'enables claude to']
+    if any(p in desc for p in generic_patterns) and 'use when' not in desc:
+        stub_reasons.append("description is generic with no 'use when' phrase")
+
+    has_instructions = bool(re.search(r'(?mi)^##\s+instructions', body))
+    if not has_instructions:
+        stub_reasons.append("missing ## Instructions section")
+
+    if len(stub_reasons) >= 2:
+        warnings.append(f"[stub] Skill appears to be a stub: {'; '.join(stub_reasons)}")
+
+    return errors, warnings
+
+
 def validate_skill(path: Path, tier: str = TIER_STANDARD) -> Dict[str, Any]:
     """
     Validate a single SKILL.md file.
@@ -2207,6 +2449,17 @@ def validate_skill(path: Path, tier: str = TIER_STANDARD) -> Dict[str, Any]:
     errors.extend(boilerplate_errors)
     warnings.extend(boilerplate_warnings)
 
+    # Supporting files check (enterprise tier)
+    if tier == TIER_ENTERPRISE:
+        sf_errors, sf_warnings = validate_supporting_files(path)
+        errors.extend(sf_errors)
+        warnings.extend(sf_warnings)
+
+    # Stub detection
+    stub_skill_errors, stub_skill_warnings = detect_stub_skill(path, body, fm)
+    errors.extend(stub_skill_errors)
+    warnings.extend(stub_skill_warnings)
+
     # Enterprise-tier quality checks (warnings only)
     if tier == TIER_ENTERPRISE:
         line_len_errors, line_len_warnings = check_line_character_length(body)
@@ -2245,6 +2498,239 @@ def validate_skill(path: Path, tier: str = TIER_STANDARD) -> Dict[str, Any]:
         'description_length': len(description),
         'grade': grade_result,
     }
+
+
+def validate_plugin(plugin_dir: Path, tier: str = TIER_STANDARD) -> Dict[str, Any]:
+    """Validate a plugin as a complete unit.
+    Walks all components and rolls up scores.
+    """
+    errors: List[str] = []
+    warnings: List[str] = []
+    infos: List[str] = []
+
+    plugin_json_path = plugin_dir / '.claude-plugin' / 'plugin.json'
+
+    # 1. Validate plugin.json
+    if plugin_json_path.exists():
+        try:
+            pj = json_module.loads(plugin_json_path.read_text(encoding='utf-8'))
+            if not isinstance(pj, dict):
+                errors.append("[plugin.json] Must be a JSON object")
+            else:
+                # Check required field
+                if 'name' not in pj:
+                    errors.append("[plugin.json] Missing required field: 'name'")
+
+                # Check for invalid fields
+                valid_fields = set(PLUGIN_JSON_FIELDS.keys())
+                for key in pj:
+                    if key not in valid_fields:
+                        errors.append(f"[plugin.json] Unknown field: '{key}' — not in Anthropic spec")
+        except json_module.JSONDecodeError as e:
+            errors.append(f"[plugin.json] Invalid JSON: {e}")
+    else:
+        warnings.append("[plugin.json] No .claude-plugin/plugin.json found")
+
+    # 2. Validate skills
+    skill_results = []
+    skills_dir = plugin_dir / 'skills'
+    if skills_dir.exists():
+        for skill_md in skills_dir.rglob('SKILL.md'):
+            result = validate_skill(skill_md, tier)
+            skill_results.append((skill_md, result))
+
+    # 3. Validate agents
+    agent_results = []
+    agents_dir = plugin_dir / 'agents'
+    if agents_dir.exists():
+        for agent_md in agents_dir.glob('*.md'):
+            result = validate_agent(agent_md)
+            agent_results.append((agent_md, result))
+
+    # 4. Validate commands (legacy — warn to migrate)
+    commands_dir = plugin_dir / 'commands'
+    if commands_dir.exists():
+        cmd_files = list(commands_dir.glob('*.md'))
+        if cmd_files:
+            infos.append(f"[plugin] commands/ directory has {len(cmd_files)} files — consider migrating to skills/")
+        for cmd_md in cmd_files:
+            result = validate_command(cmd_md)
+            if result.get('errors'):
+                errors.extend(result['errors'])
+            if result.get('warnings'):
+                warnings.extend(result['warnings'])
+
+    # 5. Check optional config files
+    if (plugin_dir / 'hooks' / 'hooks.json').exists():
+        try:
+            json_module.loads((plugin_dir / 'hooks' / 'hooks.json').read_text(encoding='utf-8'))
+        except (json_module.JSONDecodeError, Exception) as e:
+            errors.append(f"[plugin] hooks/hooks.json is invalid: {e}")
+
+    if (plugin_dir / '.mcp.json').exists():
+        try:
+            json_module.loads((plugin_dir / '.mcp.json').read_text(encoding='utf-8'))
+        except (json_module.JSONDecodeError, Exception) as e:
+            errors.append(f"[plugin] .mcp.json is invalid: {e}")
+
+    # Roll up results
+    skill_scores = []
+    for skill_path, result in skill_results:
+        rel = skill_path.relative_to(plugin_dir)
+        if result.get('fatal'):
+            errors.append(f"[skill] {rel}: FATAL - {result['fatal']}")
+        else:
+            errors.extend(result.get('errors', []))
+            warnings.extend(result.get('warnings', []))
+            grade = result.get('grade', {})
+            if grade.get('score'):
+                skill_scores.append(grade['score'])
+
+    for agent_path, result in agent_results:
+        rel = agent_path.relative_to(plugin_dir)
+        if result.get('fatal'):
+            errors.append(f"[agent] {rel}: FATAL - {result['fatal']}")
+        else:
+            errors.extend(result.get('errors', []))
+            warnings.extend(result.get('warnings', []))
+
+    avg_score = sum(skill_scores) / len(skill_scores) if skill_scores else 0
+
+    return {
+        'errors': errors,
+        'warnings': warnings,
+        'infos': infos,
+        'skill_count': len(skill_results),
+        'agent_count': len(agent_results),
+        'avg_skill_score': avg_score,
+        'type': 'plugin',
+    }
+
+
+# === COMPLIANCE DATABASE ===
+
+def populate_compliance_db(db_path: str, skill_results: list, agent_results: list = None, validator_version: str = "5.0.0"):
+    """Write validation results to SQLite compliance tables."""
+    import sqlite3
+    from datetime import datetime, timezone
+
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+
+    c.execute('''CREATE TABLE IF NOT EXISTS skill_compliance (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        skill_path TEXT UNIQUE,
+        total_fields INTEGER,
+        anthropic_fields INTEGER,
+        enterprise_fields INTEGER,
+        missing_fields TEXT,
+        has_references_dir INTEGER,
+        has_examples INTEGER,
+        has_scripts_dir INTEGER,
+        is_stub INTEGER,
+        stub_reasons TEXT,
+        score INTEGER,
+        grade TEXT,
+        error_count INTEGER,
+        warning_count INTEGER,
+        validated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        source_modified_at TIMESTAMP,
+        validator_version TEXT
+    )''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS agent_compliance (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        agent_path TEXT UNIQUE,
+        total_fields INTEGER,
+        anthropic_fields INTEGER,
+        missing_fields TEXT,
+        has_invalid_fields INTEGER,
+        invalid_fields TEXT,
+        is_plugin_agent INTEGER,
+        error_count INTEGER,
+        warning_count INTEGER,
+        validated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        validator_version TEXT
+    )''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS plugin_compliance (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        plugin_path TEXT UNIQUE,
+        plugin_json_valid INTEGER,
+        plugin_json_fields INTEGER,
+        skill_count INTEGER,
+        skill_avg_score REAL,
+        agent_count INTEGER,
+        has_hooks_json INTEGER,
+        has_mcp_json INTEGER,
+        has_license INTEGER,
+        has_changelog INTEGER,
+        overall_score REAL,
+        error_count INTEGER,
+        warning_count INTEGER,
+        validated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        validator_version TEXT
+    )''')
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    for result in skill_results:
+        skill_path = result.get('path', '')
+        score = result.get('score', 0)
+        grade = result.get('grade', 'F')
+        errors = result.get('errors', 0)
+        warnings = result.get('warnings', 0)
+
+        # Parse frontmatter from the file to count fields
+        fm = {}
+        try:
+            skill_file = Path(skill_path)
+            if skill_file.exists():
+                content = skill_file.read_text(encoding='utf-8')
+                fm_data, _ = parse_frontmatter(content)
+                fm = fm_data
+        except Exception:
+            pass  # Frontmatter parse failure — field counts default to 0
+        anthropic_fields = len([k for k in fm if k in SKILL_FIELDS and SKILL_FIELDS[k].get('source') == 'anthropic'])
+        enterprise_fields = len([k for k in fm if k in SKILL_FIELDS and SKILL_FIELDS[k].get('source') == 'enterprise'])
+        total_fields = anthropic_fields + enterprise_fields
+        missing = [k for k in ALWAYS_REQUIRED if k not in fm]
+
+        try:
+            skill_file = Path(skill_path)
+            mtime = datetime.fromtimestamp(skill_file.stat().st_mtime, tz=timezone.utc).isoformat() if skill_file.exists() else None
+        except Exception:
+            mtime = None  # File stat failure — mtime unavailable
+
+        skill_dir = Path(skill_path).parent if skill_path else Path('.')
+        has_refs = 1 if (skill_dir / 'references').exists() else 0
+        has_examples = 1 if (skill_dir / 'examples').exists() else 0
+        has_scripts = 1 if (skill_dir / 'scripts').exists() else 0
+
+        c.execute('''INSERT OR REPLACE INTO skill_compliance
+            (skill_path, total_fields, anthropic_fields, enterprise_fields, missing_fields,
+             has_references_dir, has_examples, has_scripts_dir, is_stub, stub_reasons,
+             score, grade, error_count, warning_count, validated_at, source_modified_at, validator_version)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            (skill_path, total_fields, anthropic_fields, enterprise_fields,
+             json_module.dumps(missing), has_refs, has_examples, has_scripts,
+             0, '[]', score, grade, errors, warnings, now, mtime, validator_version))
+
+    if agent_results:
+        for result in agent_results:
+            agent_path = result.get('path', '')
+            errors = result.get('errors', 0)
+            warnings = result.get('warnings', 0)
+
+            c.execute('''INSERT OR REPLACE INTO agent_compliance
+                (agent_path, total_fields, anthropic_fields, missing_fields,
+                 has_invalid_fields, invalid_fields, is_plugin_agent,
+                 error_count, warning_count, validated_at, validator_version)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                (agent_path, 0, 0, '[]', 0, '[]', 0, errors, warnings, now, validator_version))
+
+    conn.commit()
+    conn.close()
 
 
 # === MAIN ===
@@ -2307,6 +2793,13 @@ def main() -> int:
         help="Output machine-readable JSON with per-skill scoring data",
     )
     parser.add_argument(
+        "--populate-db",
+        type=str,
+        default=None,
+        metavar="DB_PATH",
+        help="Write validation results to SQLite database (e.g., freshie/inventory.sqlite)",
+    )
+    parser.add_argument(
         "path",
         nargs="?",
         default=None,
@@ -2335,11 +2828,30 @@ def main() -> int:
         if not target.exists():
             print(f"ERROR: File not found: {args.path}", file=sys.stderr)
             return 1
-        if target.name != 'SKILL.md' and not target.name.endswith('.md'):
-            print(f"ERROR: Expected a SKILL.md or .md file: {args.path}", file=sys.stderr)
+        if target.is_dir():
+            # Plugin directory mode
+            result = validate_plugin(target, tier)
+            print(f"🔍 CLAUDE CODE PLUGIN VALIDATOR v5.0 ({tier} tier)")
+            print(f"   Plugin mode: {target}")
+            print(f"{'=' * 70}\n")
+            if result['errors']:
+                for error in result['errors']:
+                    print(f"   ERROR: {error}")
+            if result['warnings']:
+                for warning in result['warnings']:
+                    print(f"   WARN: {warning}")
+            if result.get('infos'):
+                for info in result['infos']:
+                    print(f"   INFO: {info}")
+            print(f"\n   Skills: {result['skill_count']}, Agents: {result['agent_count']}")
+            if result['avg_skill_score']:
+                print(f"   Average skill score: {result['avg_skill_score']:.1f}/100")
+            return 1 if result['errors'] else 0
+        elif target.name != 'SKILL.md' and not target.name.endswith('.md'):
+            print(f"ERROR: Expected a SKILL.md, .md file, or plugin directory: {args.path}", file=sys.stderr)
             return 1
 
-        print(f"🔍 CLAUDE CODE PLUGIN VALIDATOR v4.0 ({tier} tier)")
+        print(f"🔍 CLAUDE CODE PLUGIN VALIDATOR v5.0 ({tier} tier)")
         print(f"   Single-file mode: {target}")
         print(f"{'=' * 70}\n")
 
@@ -2423,7 +2935,7 @@ def main() -> int:
         return 0
 
     if not args.json:
-        print(f"🔍 CLAUDE CODE PLUGIN VALIDATOR v4.0 ({tier} tier)")
+        print(f"🔍 CLAUDE CODE PLUGIN VALIDATOR v5.0 ({tier} tier)")
         if tier == TIER_ENTERPRISE:
             print(f"   Intent Solutions Standard (100-Point Grading)")
         else:
@@ -2478,7 +2990,7 @@ def main() -> int:
         grade_scores.append(score)
 
         json_skill_results.append({
-            'path': str(rel),
+            'path': str(skill),
             'score': score,
             'grade': letter,
             'errors': len(result.get('errors', [])),
@@ -2533,6 +3045,11 @@ def main() -> int:
     if args.json:
         print(json_module.dumps(json_skill_results))
         return 0
+
+    # Populate compliance database if requested
+    if args.populate_db:
+        populate_compliance_db(args.populate_db, json_skill_results, validator_version="5.0.0")
+        print(f"\n📊 Compliance data written to {args.populate_db}")
 
     # Validate commands
     for cmd in commands:
@@ -2669,6 +3186,16 @@ def main() -> int:
         if len(below_min_grade) > 10:
             print(f"   ... and {len(below_min_grade) - 10} more")
         return 1
+
+    # When --min-grade is set, errors are REPORTED but only grade violations BLOCK.
+    # This allows CI to enforce quality floor without requiring zero compliance gaps.
+    if args.min_grade:
+        if total_errors > 0:
+            print(f"\n⚠️  {total_errors} compliance errors reported ({tier} tier) — not blocking (--min-grade {args.min_grade} gate passed)")
+            print(f"   All graded skills meet minimum grade {args.min_grade}")
+        else:
+            print(f"\n✅ All skills fully compliant! ({tier} tier)")
+        return 0
 
     if total_errors > 0:
         print(f"\n❌ Validation FAILED with {total_errors} errors ({tier} tier)")

@@ -1,79 +1,139 @@
-# Skill Validation Rules
-Sources: [AgentSkills.io spec](https://agentskills.io/specification) · [Anthropic docs](https://code.claude.com/docs/en/skills) · Intent Solutions 100-point rubric
+# Skill & Plugin Validation Rules
+Sources: [Anthropic docs](https://code.claude.com/docs/en/skills) · Intent Solutions enterprise policy
 
-Two-tier validation aligned with AgentSkills.io spec + Enterprise extensions.
+Universal validation aligned with the Anthropic 2026 spec. Two tiers: Standard (Anthropic minimum) and Enterprise (our marketplace default — all fields required, zero tolerance for non-standard fields).
 
 ---
 
 ## Validation Tiers
 
-### Standard Tier (AgentSkills.io Minimum)
+### Standard Tier (Anthropic Minimum)
 
-The baseline. Any skill published to the ecosystem must pass this.
+The baseline for any SKILL.md to be syntactically valid in Claude Code.
 
-- `name` and `description` are the only required frontmatter fields
-- Body format is flexible ("no format restrictions" - Anthropic)
-- Under 500 lines
-- No absolute paths
+- Valid YAML frontmatter (parses without error, `---` delimiters present)
+- `name` present, kebab-case (`^[a-z][a-z0-9-]*[a-z0-9]$`), no consecutive hyphens, matches directory name
+- `description` present, third person, includes what + when context
 - No first/second person in description
+- Body under 500 lines
+- No absolute paths (`/home/`, `/Users/`, `C:\`) outside code blocks
 
-### Enterprise Tier (Default for Our Skills)
+### Enterprise Tier (Marketplace Default)
 
-Everything in Standard, plus:
+Everything in Standard, plus ALL 8 core fields REQUIRED as hard ERRORS:
 
-- `author` and `version` present (top-level fields, NOT under metadata)
-- `allowed-tools` with scoped Bash
-- Recommended sections present (title, instructions, examples)
-- Progressive disclosure used (references/ for heavy content)
-- Error handling documented
-- `${CLAUDE_SKILL_DIR}` used for all internal paths
-- All referenced resources exist
+| # | Field | Validation |
+|---|-------|-----------|
+| 1 | `name` | 1-64 chars, kebab-case, matches directory name |
+| 2 | `description` | 1-1024 chars, third person, what + when + keywords, "Use when" pattern, "Trigger with" pattern |
+| 3 | `allowed-tools` | Non-empty, all tools from valid set, Bash scoped (unscoped = ERROR) |
+| 4 | `version` | Semver format (`X.Y.Z`) — top-level, NOT under metadata |
+| 5 | `author` | Non-empty string, email recommended (`Name <email>`) — top-level, NOT under metadata |
+| 6 | `license` | Non-empty string, SPDX identifier — top-level |
+| 7 | `compatible-with` | Non-empty, values from known platforms (`claude-code`, `cursor`, `codex`, `openclaw`, `windsurf`, `cline`) |
+| 8 | `tags` | Non-empty array of discovery tags |
+
+Conditional fields (required when relevant):
+
+| Field | Condition | Level |
+|-------|-----------|-------|
+| `context` | Required if `agent` is set | ERROR |
+| `agent` | Required if `context: fork` | ERROR |
+| `argument-hint` | Recommended if `user-invocable` or body uses `$ARGUMENTS` | WARNING |
+| `model` | Recommended for all skills | INFO |
+| `effort` | Recommended for all skills | INFO |
+| `hooks` | Only validated if present | — |
+
+Body must contain all 7 sections (hard ERROR if any missing):
+
+```
+## Overview       — what the skill does and why it exists
+## Prerequisites  — what must be true before running
+## Instructions   — step-by-step workflow (numbered steps required)
+## Output         — what the user gets back
+## Error Handling — failure modes and recovery
+## Examples       — concrete input/output pairs
+## Resources      — references to supporting files
+```
+
+Supporting files required:
+- `references/` directory must exist (plural directory, NOT `reference.md` singular)
 
 ---
 
-## Frontmatter Validation
+## Invalid Fields (ERROR — reject on sight)
 
-### Required Fields (Both Tiers)
+Any field not in the Anthropic spec is an ERROR, not a warning. No "tolerated" or "transition" fields.
 
-| Field | Validation |
-|-------|-----------|
-| `name` | 1-64 chars, kebab-case `^[a-z][a-z0-9-]*[a-z0-9]$`, no consecutive hyphens, no reserved words, matches directory name |
-| `description` | 1-1024 chars, non-empty, third person only, no first/second person, specific keywords |
+| Field | Reason |
+|-------|--------|
+| `capabilities` | Invented — not in Anthropic spec |
+| `expertise_level` | Invented — not in Anthropic spec |
+| `activation_priority` | Invented — not in Anthropic spec |
+| `color` | Invented — not in Anthropic spec |
+| `activation_triggers` | Invented — not in Anthropic spec |
+| `type` | Invented — not in Anthropic spec |
+| `category` | Invented — not in Anthropic spec |
+| `compatibility` | Not Anthropic — remove or move to description prose |
+| `metadata` | Not Anthropic — move nested fields to top-level |
+| `when_to_use` | Deprecated — move content to `description` |
+| `mode` | Deprecated — use `disable-model-invocation` |
 
-### Enterprise-Required Fields (Top-Level)
+---
 
-| Field | Validation |
-|-------|-----------|
-| `author` | Non-empty string, email recommended (`Name <email>`) — top-level, NOT in metadata |
-| `version` | Semver format (`X.Y.Z`) — top-level, NOT in metadata |
-| `license` | Non-empty string (SPDX identifier) — top-level |
-| `allowed-tools` | Non-empty, all tools valid, Bash scoped |
+## Valid Frontmatter Fields (Complete List)
 
-### Optional Field Validation
+### SKILL.md Fields (Anthropic 2026)
 
-| Field | Validation |
-|-------|-----------|
-| `license` | Non-empty string if present |
-| `compatibility` | 1-500 chars if present |
-| `metadata` | Valid YAML object if present |
-| `model` | One of: `inherit`, `sonnet`, `haiku`, `opus`, or valid model ID |
-| `effort` | One of: `low`, `medium`, `high`, `max` (`max` requires Opus 4.6) |
-| `argument-hint` | Non-empty string if present |
-| `disable-model-invocation` | Boolean if present |
-| `user-invocable` | Boolean if present |
-| `context` | Must be `fork` if present |
-| `agent` | Non-empty string if present; requires `context: fork` |
-| `hooks` | Valid object with known event keys if present |
+```yaml
+# Required (Enterprise)
+name: kebab-case-name
+description: |
+  Third person. What + when + trigger phrases.
+allowed-tools: "Read,Write,Edit,Bash(git:*)"
+version: 1.0.0
+author: Name <email>
+license: MIT
+compatible-with: claude-code, cursor
+tags: [devops, ci]
 
-### Deprecated Field Warnings
+# Optional (Anthropic spec)
+model: sonnet                     # sonnet | haiku | opus | inherit
+effort: low                      # low | medium | high | max (max requires Opus 4.6)
+context: fork                    # Must be "fork" if present
+agent: general-purpose           # Non-empty string; requires context: fork
+argument-hint: "<file-path>"     # Autocomplete hint for $ARGUMENTS
+user-invocable: false            # Boolean — hide from / menu
+disable-model-invocation: true   # Boolean — prevent auto-activation
+hooks:                           # Valid object with known event keys
+  pre-tool-call: ...
+```
 
-| Field | Warning |
-|-------|---------|
-| `when_to_use` | Deprecated - move to description |
-| `mode` | Deprecated - use `disable-model-invocation` |
+### Agent Fields (Anthropic 2026 — 14 total)
 
-**Note**: `version`, `author`, `license`, `tags`, and `compatible-with` are valid top-level fields.
-The marketplace 100-point validator scores them at top-level.
+```yaml
+# Required
+name: agent-name
+description: "20-200 char description"
+
+# Optional (Anthropic spec)
+model: sonnet
+effort: low | medium | high
+maxTurns: 10
+disallowedTools: ["mcp__servername"]
+permissionMode: default
+
+# Valid but less common
+capabilities: []                  # NOTE: valid for agents ONLY, not skills
+```
+
+**Plugin agents CANNOT use** (WARN if present):
+- `hooks` — plugin-level only, not agent-level
+- `mcpServers` — plugin-level only
+- `permissionMode` — standalone agent only, not plugin-scoped
+
+**Invalid for agents** (ERROR):
+- `expertise_level`, `activation_priority`, `color`, `activation_triggers`, `type`, `category` — invented, not Anthropic
 
 ---
 
@@ -81,7 +141,7 @@ The marketplace 100-point validator scores them at top-level.
 
 ### Must Include (Both Tiers)
 
-- What the skill does (action-oriented)
+- What the skill does (action-oriented, third person)
 - When to use it (context/triggers)
 - Specific keywords for discovery
 
@@ -92,10 +152,11 @@ The marketplace 100-point validator scores them at top-level.
 | First person | `\b(I can\|I will\|I'm\|I help)\b` | "I can generate..." |
 | Second person | `\b(You can\|You should\|You will)\b` | "You can use..." |
 
-### Recommended (Enterprise)
+### Enterprise Additions
 
+- Must include "Use when" pattern (+3 pts)
+- Must include "Trigger with" pattern (+3 pts)
 - Action verbs (analyze, create, generate, build, debug, optimize, validate)
-- Slash command reference
 - Third person throughout
 
 ---
@@ -106,7 +167,8 @@ The marketplace 100-point validator scores them at top-level.
 
 | Check | Level | Detail |
 |-------|-------|--------|
-| Line count | Error | Must be under 500 lines |
+| Line count <=500 | Error | Must be under 500 lines |
+| Line count 301-500 | Warning | Consider splitting to references |
 | Absolute paths | Error | No `/home/`, `/Users/`, `C:\` outside code blocks |
 | Has H1 title | Warning | Should have `# Title` |
 
@@ -114,14 +176,34 @@ The marketplace 100-point validator scores them at top-level.
 
 | Check | Level | Detail |
 |-------|-------|--------|
-| Has instructions | Warning | Should have `## Instructions` or step-by-step content |
-| Has examples | Warning | Should have `## Examples` or example content |
-| Instructions have steps | Warning | Should have numbered steps or `### Step N` headings |
-| Error handling | Warning | Should document error cases |
-| Resources section | Warning | Should list `${CLAUDE_SKILL_DIR}/` references if resources exist |
+| 7 required sections present | Error | Overview, Prerequisites, Instructions, Output, Error Handling, Examples, Resources |
+| Instructions have numbered steps | Warning | Should have numbered steps or `### Step N` headings |
 | All `${CLAUDE_SKILL_DIR}/` refs exist | Error | Referenced scripts, references, templates must exist |
 | No path escapes | Error | No `${CLAUDE_SKILL_DIR}/../` |
+| `references/` directory exists | Error | Must use `references/` (plural directory), not `reference.md` singular |
 | Word count | Warning | Over 5000 words suggests splitting to references |
+
+### SKILL.md Line Limits
+
+| Range | Level |
+|-------|-------|
+| 1-300 lines | OK |
+| 301-500 lines | WARNING |
+| >500 lines | ERROR |
+
+---
+
+## Stub Detection Rules
+
+A component is flagged as a "stub" (ERROR at enterprise tier, WARNING at standard) if ANY of these are true:
+
+| Condition | Detection |
+|-----------|-----------|
+| Body too short | SKILL.md body (after frontmatter) < 30 lines |
+| No substantive content | Zero code blocks AND zero markdown links to supporting files |
+| Empty supporting files | Files in `references/`, `scripts/`, `templates/` exist but are 0 bytes |
+| Generic description | Matches patterns: "A helpful tool", "Generates...", or lacks "use when" |
+| No instructions | Missing `## Instructions` section entirely |
 
 ---
 
@@ -157,16 +239,94 @@ Bash(docker:*)
 
 ---
 
+## Plugin-Level Validation
+
+When the validator is pointed at a plugin directory (not just a single SKILL.md):
+
+### 1. Validate `plugin.json`
+
+Check against the 8-field schema. Only `name` is strictly required by Anthropic; enterprise requires all populated fields to be from the valid set:
+
+Valid fields: `name`, `version`, `description`, `author`, `repository`, `homepage`, `license`, `keywords`
+
+ERROR on any field not in this list.
+
+### 2. Walk `skills/*/SKILL.md`
+
+Validate each SKILL.md against the active tier (standard or enterprise). Each skill scores independently.
+
+### 3. Walk `agents/*.md`
+
+Validate each agent against the 14-field Anthropic agent schema. Flag plugin agents using standalone-only fields (`permissionMode`).
+
+### 4. Walk `commands/*.md`
+
+Validate each command file (YAML frontmatter + body). Legacy format — emit INFO suggesting migration to skills where appropriate.
+
+### 5. Check `hooks/hooks.json` (if present)
+
+Validate hook event keys are from the known set. Validate referenced scripts exist and are executable.
+
+### 6. Check `.mcp.json` (if present)
+
+Validate MCP server configuration structure.
+
+### 7. Roll Up Plugin Score
+
+Plugin score = weighted average of component scores:
+- Skills: 50% weight
+- Agents: 20% weight
+- Commands: 15% weight
+- Plugin.json completeness: 10% weight
+- Hooks/MCP correctness: 5% weight
+
+---
+
+## Agent Validation Rules
+
+Anthropic defines 14 valid fields for agents. `name` and `description` are REQUIRED (both tiers).
+
+### Valid Agent Fields
+
+| Field | Required | Validation |
+|-------|----------|-----------|
+| `name` | Yes | 1-64 chars, kebab-case |
+| `description` | Yes | 20-200 chars, specific to agent's specialty |
+| `model` | No | `sonnet`, `haiku`, `opus`, or valid model ID |
+| `effort` | No | `low`, `medium`, `high` |
+| `maxTurns` | No | Positive integer, controls autonomous iteration |
+| `disallowedTools` | No | Array of tool names (denylist — opposite of skills' `allowed-tools`) |
+| `permissionMode` | No | `default` — standalone agents only, NOT plugin agents |
+
+### Context-Aware Rules
+
+**Plugin agents** (`plugins/*/agents/*.md`):
+- WARN if `hooks` present (hooks belong at plugin level, not agent level)
+- WARN if `mcpServers` present (plugin-level concern)
+- WARN if `permissionMode` present (standalone-only field)
+
+**Standalone agents** (`~/.claude/agents/*.md`):
+- All fields valid without restriction
+
+### Invalid Agent Fields (ERROR)
+
+These are invented fields that appear in no Anthropic documentation:
+
+`capabilities` (valid for agents only per spec, but flag if used as a freeform list), `expertise_level`, `activation_priority`, `color`, `activation_triggers`, `type`, `category`
+
+---
+
 ## Anti-Pattern Detection
 
 | Anti-Pattern | Check | Level |
 |-------------|-------|-------|
 | Windows paths | `C:\` or backslash paths | Error |
-| Nested references | `${CLAUDE_SKILL_DIR}/references/sub/dir/file` | Warning |
-| Hardcoded model IDs | `claude-*-20\d{6}` pattern | Warning |
+| Nested references | `${CLAUDE_SKILL_DIR}/references/sub/dir/file` (more than 1 level deep) | Warning |
+| Hardcoded model IDs | `claude-*-20\d{6}` pattern (use `sonnet`/`haiku`/`opus` instead) | Warning |
 | Voodoo constants | Unexplained magic numbers | Info |
-| Over-verbose | >5000 words in SKILL.md | Warning |
-| Missing progressive disclosure | >300 lines + no `references/` dir | Warning |
+| Over-verbose | >5000 words in SKILL.md body | Warning |
+| Missing progressive disclosure | >300 lines + no `references/` directory | Warning |
+| Singular reference file | `reference.md` instead of `references/` directory | Error |
 
 ---
 
@@ -202,6 +362,14 @@ Skills can use `` !`command` `` syntax (Anthropic spec preprocessing) to inject 
 | `` !`command` `` directives present | +1 modifier bonus |
 | Combined with `references/` directory | INFO note on layered structure |
 
+### DCI Validation Rules
+
+| Check | Level |
+|-------|-------|
+| Command has error fallback (`2>/dev/null \|\| echo '...'`) | Warning if missing |
+| Output expected to be small (<5KB) | Info if potentially large |
+| No secrets in DCI commands (API keys, tokens) | Error |
+
 ### When to Use
 
 | Scenario | Method |
@@ -227,11 +395,11 @@ The command runs at skill activation time. Output is injected verbatim into the 
 ## String Substitution Validation
 
 If SKILL.md body contains `$ARGUMENTS` or `$0`, `$1`, etc.:
-- `argument-hint` SHOULD be set in frontmatter
+- `argument-hint` SHOULD be set in frontmatter (WARNING if missing)
 - Instructions SHOULD handle empty `$ARGUMENTS` case
 - `$ARGUMENTS[N]` indexing should be sequential from 0
 
-Also recognized: `${CLAUDE_SESSION_ID}` — current session identifier (official Anthropic substitution).
+Also recognized: `${CLAUDE_SESSION_ID}` — current session identifier (Anthropic substitution).
 
 ---
 
@@ -241,26 +409,32 @@ Also recognized: `${CLAUDE_SESSION_ID}` — current session identifier (official
 1. File exists and is readable
 2. YAML frontmatter parses without error
 3. Frontmatter separator (`---`) present at start and end
+4. No non-standard fields present (ERROR on any invented/deprecated field)
 
 ### Field Validation
-1. Required fields present
-2. Field types correct
-3. Field constraints met
-4. No deprecated fields (or warned)
+1. All 8 required fields present (enterprise) or 2 required fields (standard)
+2. Field types correct (string, array, boolean, semver)
+3. Field constraints met (kebab-case, SPDX, valid tool names)
+4. No deprecated fields (ERROR: `when_to_use`, `mode`, `compatibility`, `metadata`)
+5. No invented fields (ERROR: `capabilities`, `expertise_level`, `activation_priority`, etc.)
+6. Conditional field logic (`context` requires `agent` and vice versa)
 
 ### Body Validation
-1. Length within limits
-2. Required sections present (Enterprise)
-3. No absolute paths
-4. Instructions have steps (Enterprise)
+1. Length within limits (301-500 = WARNING, >500 = ERROR)
+2. All 7 required sections present (enterprise) — hard ERROR if any missing
+3. No absolute paths outside code blocks
+4. Instructions have numbered steps (enterprise)
+5. Stub detection (body <30 lines, no code blocks, no links, generic description)
+6. `references/` directory exists (enterprise)
 
 ### Resource Validation
 1. All `${CLAUDE_SKILL_DIR}/scripts/*` references exist
 2. All `${CLAUDE_SKILL_DIR}/references/*` references exist
 3. All `${CLAUDE_SKILL_DIR}/templates/*` references exist
 4. All `${CLAUDE_SKILL_DIR}/assets/*` references exist
-5. Relative markdown links (e.g., `[ref](reference.md)`, `[api](references/api.md)`) point to existing files
-6. No path escape attempts
+5. Relative markdown links (e.g., `[ref](references/api.md)`) point to existing files
+6. No path escape attempts (`../`)
+7. No empty (0-byte) supporting files (stub detection)
 
 ### Report
 - Errors: Must fix (blocks pass)
@@ -268,6 +442,7 @@ Also recognized: `${CLAUDE_SESSION_ID}` — current session identifier (official
 - Info: Optional improvements (includes structural advisor suggestions)
 - Score: Progressive disclosure score
 - Stats: Word count, line count, token estimate
+- Stub flags: Components identified as stubs
 
 ---
 
@@ -289,3 +464,8 @@ INFO-level suggestions emitted after grading. Not scored — purely advisory.
 - **Trigger**: File existence checks, git operations, or tool version detection without DCI
 - **Suggestion**: Add `` !`command` `` directives for auto-detection at activation
 - **Why**: Eliminates discovery tool calls; Claude starts with context pre-loaded
+
+### Migrate Commands to Skills
+- **Trigger**: `commands/*.md` files present without corresponding `skills/` entries
+- **Suggestion**: Consider migrating to SKILL.md format for auto-activation
+- **Why**: Skills activate automatically on context; commands require explicit `/name` invocation

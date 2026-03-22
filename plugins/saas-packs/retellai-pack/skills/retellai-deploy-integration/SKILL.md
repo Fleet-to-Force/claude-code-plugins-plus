@@ -10,12 +10,13 @@ allowed-tools: Read, Write, Edit, Bash(vercel:*), Bash(fly:*), Bash(gcloud:*)
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Deploy Integration
 
 ## Overview
-Deploy Retell AI voice agent applications to production. Covers configuring voice agent webhooks, deploying WebSocket endpoints for real-time audio, and managing API credentials for Retell AI's call management API at `api.retellai.com`.
+Deploy Retell AI voice agent applications to production platforms. Covers configuring voice agent webhooks, deploying WebSocket endpoints for real-time audio streaming, and managing API credentials across Fly.io, Cloud Run, and Vercel. Voice agents require persistent WebSocket connections, making platform choice critical -- serverless functions timeout mid-call.
 
 ## Prerequisites
 - Retell AI API key stored in `RETELL_API_KEY` environment variable
@@ -25,113 +26,22 @@ Deploy Retell AI voice agent applications to production. Covers configuring voic
 
 ## Instructions
 
-### Step 1: Configure Secrets
-```bash
-# Fly.io (recommended for WebSocket support)
-fly secrets set RETELL_API_KEY=your-key
-fly secrets set RETELL_WEBHOOK_SECRET=your-secret
-
-# Cloud Run
-echo -n "your-key" | gcloud secrets create retell-api-key --data-file=-
-```
-
-### Step 2: Deploy WebSocket Server
-```typescript
-// server.ts - WebSocket for real-time audio
-import { WebSocketServer } from "ws";
-import express from "express";
-
-const app = express();
-const server = app.listen(process.env.PORT || 3000);  # 3000: 3 seconds in ms
-const wss = new WebSocketServer({ server, path: "/ws/call" });
-
-wss.on("connection", (ws, req) => {
-  const callId = new URL(req.url!, `http://${req.headers.host}`).searchParams.get("call_id");
-  console.log(`WebSocket connected for call: ${callId}`);
-
-  ws.on("message", (data) => {
-    // Process audio stream from Retell AI
-    handleAudioChunk(callId!, data);
-  });
-
-  ws.on("close", () => {
-    console.log(`Call ${callId} WebSocket closed`);
-  });
-});
-```
-
-### Step 3: Fly.io Deployment
-```toml
-# fly.toml
-app = "retellai-voice-server"
-primary_region = "iad"
-
-[env]
-NODE_ENV = "production"
-
-[http_service]
-internal_port = 3000  # 3000: 3 seconds in ms
-force_https = true
-auto_stop_machines = false
-auto_start_machines = true
-min_machines_running = 1
-
-[checks]
-  [checks.health]
-    type = "http"
-    port = 3000  # 3 seconds in ms
-    path = "/health"
-    interval = "30s"
-```
-
-```bash
-fly deploy
-```
-
-### Step 4: Webhook Endpoint
-```typescript
-// api/webhooks/retellai.ts
-app.post("/webhooks/retellai", express.raw({ type: "application/json" }), (req, res) => {
-  const event = JSON.parse(req.body.toString());
-  res.status(200).json({ received: true });  # HTTP 200 OK
-
-  switch (event.event) {
-    case "call_ended":
-      processCallTranscript(event.call);
-      break;
-    case "call_analyzed":
-      syncCallAnalysis(event.call);
-      break;
-  }
-});
-```
-
-### Step 5: Register Agent Webhook
-```bash
-set -euo pipefail
-curl -X PATCH https://api.retellai.com/v2/agent/$AGENT_ID \
-  -H "Authorization: Bearer $RETELL_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "webhook_url": "https://your-app.fly.dev/webhooks/retellai",
-    "websocket_url": "wss://your-app.fly.dev/ws/call"
-  }'
-```
+1. **Configure secrets** on the deployment platform. Use `fly secrets set` for Fly.io or `gcloud secrets create` for Cloud Run. Never commit API keys to source control.
+2. **Deploy the WebSocket server** with persistent connections enabled. Fly.io is recommended because it supports long-lived WebSocket connections natively. See [deployment configs](references/deployment-configs.md) for server code and `fly.toml` configuration.
+3. **Set up webhook endpoints** for receiving call lifecycle events (call_ended, call_analyzed). Process events asynchronously after returning a 200 response.
+4. **Register the webhook URL** with the Retell AI agent using the API. Point both `webhook_url` and `websocket_url` to the deployed endpoints.
 
 ## Error Handling
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| WebSocket disconnect | Server restart | Use `min_machines_running: 1` |
+| WebSocket disconnect | Server restart | Use `min_machines_running: 1` on Fly.io |
 | Audio latency | Wrong region | Deploy close to Retell AI servers (US East) |
 | Webhook signature fail | Wrong secret | Verify secret in Retell AI dashboard |
 | Call quality issues | Network jitter | Use dedicated VM, not serverless |
 
 ## Examples
 
-
-**Basic usage**: Apply retellai deploy integration to a standard project setup with default configuration options.
-
-**Advanced scenario**: Customize retellai deploy integration for production environments with multiple constraints and team-specific requirements.
+For WebSocket server code, Fly.io config, webhook handlers, and agent registration commands, see [deployment configs](references/deployment-configs.md).
 
 ## Resources
 - [Retell AI Documentation](https://docs.retellai.com)
@@ -139,10 +49,10 @@ curl -X PATCH https://api.retellai.com/v2/agent/$AGENT_ID \
 - [Fly.io WebSocket Guide](https://fly.io/docs/reference/runtime-environment/#websocket)
 
 ## Next Steps
-For multi-environment setup, see `retellai-multi-env-setup`.
+For multi-environment configuration (dev/staging/prod), see `retellai-multi-env-setup`. For production readiness verification, see `retellai-prod-checklist`.
 
 ## Output
-
-- Configuration files or code changes applied to the project
-- Validation report confirming correct implementation
-- Summary of changes made and their rationale
+- Voice agent server deployed with WebSocket support
+- Webhook endpoints registered and receiving events
+- API secrets configured securely on the platform
+- Health checks verified for the deployed service

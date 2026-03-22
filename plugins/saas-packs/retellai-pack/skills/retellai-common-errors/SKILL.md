@@ -10,12 +10,13 @@ allowed-tools: Read, Grep, Bash(curl:*)
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Common Errors
 
 ## Overview
-Quick reference for the top 10 most common Retell AI errors and their solutions.
+Quick reference for the most common Retell AI errors and their solutions. Covers authentication failures, rate limit responses, network timeouts, and provides diagnostic commands for rapid triage.
 
 ## Prerequisites
 - Retell AI SDK installed
@@ -109,4 +110,4 @@ env | grep RETELLAI
 - [Retell AI Error Codes](https://docs.retellai.com/errors)
 
 ## Next Steps
-For comprehensive debugging, see `retellai-debug-bundle`.
+For comprehensive debugging with evidence collection, see `retellai-debug-bundle`. For advanced troubleshooting when standard fixes fail, see `retellai-advanced-troubleshooting`.

@@ -10,7 +10,8 @@ allowed-tools: Read, Write, Edit, Bash(npm:*), Bash(node:*), Bash(kubectl:*)
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Migration Deep Dive
 
@@ -19,7 +20,7 @@ compatible-with: claude-code, codex, openclaw
 !`pip freeze 2>/dev/null | head -20`
 
 ## Overview
-Comprehensive guide for migrating to or from Retell AI, or major version upgrades.
+Comprehensive guide for migrating to or from Retell AI, or performing major version upgrades. Covers the strangler fig pattern for gradual traffic shifting, adapter layer abstraction for safe parallel runs, batch data migration with error recovery, and feature-flag-controlled rollout with rollback procedures.
 
 ## Prerequisites
 - Current system documentation
@@ -36,216 +37,48 @@ Comprehensive guide for migrating to or from Retell AI, or major version upgrade
 | Major version | Medium | Weeks | Medium |
 | Full replatform | High | Months | High |
 
-## Pre-Migration Assessment
-
-### Step 1: Current State Analysis
-```bash
-set -euo pipefail
-# Document current implementation
-find . -name "*.ts" -o -name "*.py" | xargs grep -l "retellai" > retellai-files.txt
-
-# Count integration points
-wc -l retellai-files.txt
-
-# Identify dependencies
-npm list | grep retellai
-pip freeze | grep retellai
-```
-
-### Step 2: Data Inventory
-```typescript
-interface MigrationInventory {
-  dataTypes: string[];
-  recordCounts: Record<string, number>;
-  dependencies: string[];
-  integrationPoints: string[];
-  customizations: string[];
-}
-
-async function assessRetell AIMigration(): Promise<MigrationInventory> {
-  return {
-    dataTypes: await getDataTypes(),
-    recordCounts: await getRecordCounts(),
-    dependencies: await analyzeDependencies(),
-    integrationPoints: await findIntegrationPoints(),
-    customizations: await documentCustomizations(),
-  };
-}
-```
-
-## Migration Strategy: Strangler Fig Pattern
-
-```
-Phase 1: Parallel Run
-┌─────────────┐     ┌─────────────┐
-│   Old       │     │   New       │
-│   System    │ ──▶ │  Retell AI   │
-│   (100%)    │     │   (0%)      │
-└─────────────┘     └─────────────┘
-
-Phase 2: Gradual Shift
-┌─────────────┐     ┌─────────────┐
-│   Old       │     │   New       │
-│   (50%)     │ ──▶ │   (50%)     │
-└─────────────┘     └─────────────┘
-
-Phase 3: Complete
-┌─────────────┐     ┌─────────────┐
-│   Old       │     │   New       │
-│   (0%)      │ ──▶ │   (100%)    │
-└─────────────┘     └─────────────┘
-```
-
-## Implementation Plan
-
-### Phase 1: Setup (Week 1-2)
-```bash
-set -euo pipefail
-# Install Retell AI SDK
-npm install @retellai/sdk
-
-# Configure credentials
-cp .env.example .env.retellai
-# Edit with new credentials
-
-# Verify connectivity
-node -e "require('@retellai/sdk').ping()"
-```
-
-### Phase 2: Adapter Layer (Week 3-4)
-```typescript
-// src/adapters/retellai.ts
-interface ServiceAdapter {
-  create(data: CreateInput): Promise<Resource>;
-  read(id: string): Promise<Resource>;
-  update(id: string, data: UpdateInput): Promise<Resource>;
-  delete(id: string): Promise<void>;
-}
-
-class Retell AIAdapter implements ServiceAdapter {
-  async create(data: CreateInput): Promise<Resource> {
-    const retellaiData = this.transform(data);
-    return retellaiClient.create(retellaiData);
-  }
-
-  private transform(data: CreateInput): Retell AIInput {
-    // Map from old format to Retell AI format
-  }
-}
-```
-
-### Phase 3: Data Migration (Week 5-6)
-```typescript
-async function migrateRetell AIData(): Promise<MigrationResult> {
-  const batchSize = 100;
-  let processed = 0;
-  let errors: MigrationError[] = [];
-
-  for await (const batch of oldSystem.iterateBatches(batchSize)) {
-    try {
-      const transformed = batch.map(transform);
-      await retellaiClient.batchCreate(transformed);
-      processed += batch.length;
-    } catch (error) {
-      errors.push({ batch, error });
-    }
-
-    // Progress update
-    console.log(`Migrated ${processed} records`);
-  }
-
-  return { processed, errors };
-}
-```
-
-### Phase 4: Traffic Shift (Week 7-8)
-```typescript
-// Feature flag controlled traffic split
-function getServiceAdapter(): ServiceAdapter {
-  const retellaiPercentage = getFeatureFlag('retellai_migration_percentage');
-
-  if (Math.random() * 100 < retellaiPercentage) {
-    return new Retell AIAdapter();
-  }
-
-  return new LegacyAdapter();
-}
-```
-
-## Rollback Plan
-
-```bash
-set -euo pipefail
-# Immediate rollback
-kubectl set env deployment/app RETELLAI_ENABLED=false
-kubectl rollout restart deployment/app
-
-# Data rollback (if needed)
-./scripts/restore-from-backup.sh --date YYYY-MM-DD
-
-# Verify rollback
-curl https://app.yourcompany.com/health | jq '.services.retellai'
-```
-
-## Post-Migration Validation
-
-```typescript
-async function validateRetell AIMigration(): Promise<ValidationReport> {
-  const checks = [
-    { name: 'Data count match', fn: checkDataCounts },
-    { name: 'API functionality', fn: checkApiFunctionality },
-    { name: 'Performance baseline', fn: checkPerformance },
-    { name: 'Error rates', fn: checkErrorRates },
-  ];
-
-  const results = await Promise.all(
-    checks.map(async c => ({ name: c.name, result: await c.fn() }))
-  );
-
-  return { checks: results, passed: results.every(r => r.result.success) };
-}
-```
-
 ## Instructions
 
-### Assess current configuration
-Document existing implementation and data inventory.
+### Step 1: Assess Current Configuration
+Document existing implementation and data inventory. Identify all integration points, data types, record counts, and customizations. See [migration implementation](references/migration-implementation.md) for the assessment script and data inventory interface.
 
 ### Step 2: Build Adapter Layer
-Create abstraction layer for gradual migration.
+Create an abstraction layer that implements a common `ServiceAdapter` interface for both the old system and Retell AI. This enables parallel runs and gradual traffic shifting without changing application code. Full adapter pattern in [migration implementation](references/migration-implementation.md).
 
 ### Step 3: Migrate Data
-Run batch data migration with error handling.
+Run batch data migration with error handling. Process records in batches of 100, log progress, and collect errors for retry. The migration function with error recovery is in [migration implementation](references/migration-implementation.md).
 
 ### Step 4: Shift Traffic
-Gradually route traffic to new Retell AI integration.
+Use feature flags to gradually route traffic from the old system to Retell AI. Start at 10%, monitor error rates, then increase to 50% and finally 100%. Rollback by setting the flag to 0%.
 
 ## Output
-- Migration assessment complete
-- Adapter layer implemented
-- Data migrated successfully
-- Traffic fully shifted to Retell AI
+- Migration assessment complete with integration point inventory
+- Adapter layer implemented for parallel operation
+- Data migrated successfully with error report
+- Traffic fully shifted to Retell AI with verified rollback path
 
 ## Error Handling
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| Data mismatch | Transform errors | Validate transform logic |
-| Performance drop | No caching | Add caching layer |
-| Rollback triggered | Errors spiked | Reduce traffic percentage |
-| Validation failed | Missing data | Check batch processing |
+| Data mismatch | Transform errors | Validate transform logic with sample data first |
+| Performance drop | No caching | Add caching layer to adapter |
+| Rollback triggered | Errors spiked | Reduce traffic percentage, investigate root cause |
+| Validation failed | Missing data | Check batch processing logs for skipped records |
 
 ## Examples
 
 ### Quick Migration Status
 ```typescript
-const status = await validateRetell AIMigration();
+const status = await validateRetellAIMigration();
 console.log(`Migration ${status.passed ? 'PASSED' : 'FAILED'}`);
 status.checks.forEach(c => console.log(`  ${c.name}: ${c.result.success}`));
 ```
+
+For strangler fig diagrams, phase-by-phase implementation, rollback scripts, and validation code, see [migration implementation](references/migration-implementation.md).
 
 ## Resources
 - [Strangler Fig Pattern](https://martinfowler.com/bliki/StranglerFigApplication.html)
 - [Retell AI Migration Guide](https://docs.retellai.com/migration)
 
-## Flagship+ Skills
-For advanced troubleshooting, see `retellai-advanced-troubleshooting`.
+## Next Steps
+For advanced troubleshooting during migration issues, see `retellai-advanced-troubleshooting`. For CI pipeline setup to validate migration changes, see `retellai-ci-integration`.

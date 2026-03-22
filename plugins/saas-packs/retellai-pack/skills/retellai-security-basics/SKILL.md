@@ -10,132 +10,55 @@ allowed-tools: Read, Write, Grep
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Security Basics
 
 ## Overview
-Security best practices for Retell AI API keys, tokens, and access control.
+Security best practices for Retell AI API keys, tokens, and access control. Covers environment variable management with `.gitignore` protection, secret rotation procedures, least-privilege scope assignment per environment, webhook signature verification using HMAC-SHA256, and audit logging for compliance tracking.
 
 ## Prerequisites
 - Retell AI SDK installed
 - Understanding of environment variables
 - Access to Retell AI dashboard
 
-## Instructions
+## Least Privilege Scopes
 
-### Step 1: Configure Environment Variables
-```bash
-# .env (NEVER commit to git)
-RETELLAI_API_KEY=sk_live_***
-RETELLAI_SECRET=***
-
-# .gitignore
-.env
-.env.local
-.env.*.local
-```
-
-### Step 2: Implement Secret Rotation
-```bash
-set -euo pipefail
-# 1. Generate new key in Retell AI dashboard
-# 2. Update environment variable
-export RETELLAI_API_KEY="new_key_here"
-
-# 3. Verify new key works
-curl -H "Authorization: Bearer ${RETELLAI_API_KEY}" \
-  https://api.retellai.com/health
-
-# 4. Revoke old key in dashboard
-```
-
-### Step 3: Apply Least Privilege
 | Environment | Recommended Scopes |
 |-------------|-------------------|
 | Development | `read:*` |
 | Staging | `read:*, write:limited` |
-| Production | `Only required scopes` |
+| Production | Only required scopes |
+
+## Instructions
+
+1. **Configure environment variables** with API keys in `.env` files that are git-ignored. Never commit secrets to version control. See [security patterns](references/security-patterns.md) for the setup.
+2. **Set up secret rotation** by generating new keys in the Retell AI dashboard, updating environment variables, verifying connectivity, and then revoking old keys.
+3. **Apply least privilege** by using separate API keys per environment with minimal scopes. Development keys should be read-only, production keys should have only the scopes required by the application.
+4. **Verify webhook signatures** using HMAC-SHA256 with timing-safe comparison to prevent replay attacks on webhook endpoints.
+5. **Add audit logging** to track all API operations with user ID, action, resource, and result for compliance and debugging.
 
 ## Output
-- Secure API key storage
-- Environment-specific access controls
-- Audit logging enabled
+- Secure API key storage in environment variables
+- Environment-specific access controls with minimal scopes
+- Webhook signature verification preventing unauthorized access
+- Audit logging enabled for compliance tracking
 
 ## Error Handling
 | Security Issue | Detection | Mitigation |
 |----------------|-----------|------------|
-| Exposed API key | Git scanning | Rotate immediately |
-| Excessive scopes | Audit logs | Reduce permissions |
-| Missing rotation | Key age check | Schedule rotation |
+| Exposed API key | Git scanning tools | Rotate immediately, revoke old key |
+| Excessive scopes | Audit log review | Reduce to minimum required permissions |
+| Missing rotation | Key age monitoring | Schedule quarterly rotation |
 
 ## Examples
 
-### Service Account Pattern
-```typescript
-const clients = {
-  reader: new RetellAIClient({
-    apiKey: process.env.RETELLAI_READ_KEY,
-  }),
-  writer: new RetellAIClient({
-    apiKey: process.env.RETELLAI_WRITE_KEY,
-  }),
-};
-```
-
-### Webhook Signature Verification
-```typescript
-import crypto from 'crypto';
-
-function verifyWebhookSignature(
-  payload: string, signature: string, secret: string
-): boolean {
-  const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-}
-```
-
-### Security Checklist
-- [ ] API keys in environment variables
-- [ ] `.env` files in `.gitignore`
-- [ ] Different keys for dev/staging/prod
-- [ ] Minimal scopes per environment
-- [ ] Webhook signatures validated
-- [ ] Audit logging enabled
-
-### Audit Logging
-```typescript
-interface AuditEntry {
-  timestamp: Date;
-  action: string;
-  userId: string;
-  resource: string;
-  result: 'success' | 'failure';
-  metadata?: Record<string, any>;
-}
-
-async function auditLog(entry: Omit<AuditEntry, 'timestamp'>): Promise<void> {
-  const log: AuditEntry = { ...entry, timestamp: new Date() };
-
-  // Log to Retell AI analytics
-  await retellaiClient.track('audit', log);
-
-  // Also log locally for compliance
-  console.log('[AUDIT]', JSON.stringify(log));
-}
-
-// Usage
-await auditLog({
-  action: 'retellai.api.call',
-  userId: currentUser.id,
-  resource: '/v1/resource',
-  result: 'success',
-});
-```
+For environment setup, rotation scripts, service account patterns, webhook verification, and audit logging, see [security patterns](references/security-patterns.md).
 
 ## Resources
 - [Retell AI Security Guide](https://docs.retellai.com/security)
 - [Retell AI API Scopes](https://docs.retellai.com/scopes)
 
 ## Next Steps
-For production deployment, see `retellai-prod-checklist`.
+For production deployment security, see `retellai-prod-checklist`. For multi-environment key management, see `retellai-multi-env-setup`.

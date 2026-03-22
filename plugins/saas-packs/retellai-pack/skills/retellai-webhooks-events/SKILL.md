@@ -10,12 +10,13 @@ allowed-tools: Read, Write, Edit, Bash(curl:*)
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Webhooks & Events
 
 ## Overview
-Handle Retell AI webhooks for real-time voice call lifecycle events. Retell AI fires webhooks when calls start, end, or encounter events during conversation.
+Handle Retell AI webhooks for real-time voice call lifecycle events. Retell AI fires webhooks when calls start, end, or encounter events during conversation. This skill covers HMAC-SHA256 signature verification, event routing for all call lifecycle states, transcript and sentiment processing, and outbound call initiation via the API.
 
 ## Prerequisites
 - Retell AI account with API access
@@ -37,158 +38,38 @@ Handle Retell AI webhooks for real-time voice call lifecycle events. Retell AI f
 ## Instructions
 
 ### Step 1: Configure Webhook Endpoint
-```typescript
-import express from "express";
-import crypto from "crypto";
-
-const app = express();
-
-app.post("/webhooks/retellai",
-  express.raw({ type: "application/json" }),
-  async (req, res) => {
-    const signature = req.headers["x-retell-signature"] as string;
-    const secret = process.env.RETELL_WEBHOOK_SECRET!;
-
-    const expected = crypto
-      .createHmac("sha256", secret)
-      .update(req.body)
-      .digest("hex");
-
-    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
-      return res.status(401).json({ error: "Invalid signature" });  # HTTP 401 Unauthorized
-    }
-
-    const event = JSON.parse(req.body.toString());
-    res.status(200).json({ received: true });  # HTTP 200 OK
-    await handleRetellEvent(event);
-  }
-);
-```
+Set up an Express endpoint that validates HMAC-SHA256 signatures before processing any event. Use `express.raw()` middleware to access the raw body for signature verification. See [webhook handlers](references/webhook-handlers.md) for the complete implementation with timing-safe comparison.
 
 ### Step 2: Route Call Events
-```typescript
-interface RetellWebhookPayload {
-  event: string;
-  call: {
-    call_id: string;
-    agent_id: string;
-    call_status: string;
-    from_number: string;
-    to_number: string;
-    duration_ms?: number;
-    transcript?: string;
-    call_analysis?: {
-      sentiment: string;
-      summary: string;
-      custom_analysis_data: Record<string, any>;
-    };
-  };
-}
-
-async function handleRetellEvent(payload: RetellWebhookPayload) {
-  switch (payload.event) {
-    case "call_started":
-      await handleCallStarted(payload.call);
-      break;
-    case "call_ended":
-      await handleCallEnded(payload.call);
-      break;
-    case "call_analyzed":
-      await handleCallAnalyzed(payload.call);
-      break;
-    case "agent_transfer":
-      await handleAgentTransfer(payload.call);
-      break;
-  }
-}
-```
+Implement a switch-based event router that dispatches to handler functions for each event type. Process `call_ended` for transcript storage, `call_analyzed` for sentiment-based alerting, and `agent_transfer` for human handoff tracking.
 
 ### Step 3: Process Call Results
-```typescript
-async function handleCallEnded(call: any) {
-  const { call_id, duration_ms, transcript, from_number } = call;
-  const durationMin = Math.round(duration_ms / 60000);  # 60000: 1 minute in ms
+Store call records in the database with duration, transcript, and completion timestamp. Extract action items from transcripts using LLM analysis. Route negative-sentiment calls to escalation channels. Full handler code in [webhook handlers](references/webhook-handlers.md).
 
-  console.log(`Call ${call_id} ended: ${durationMin}min`);
-
-  await db.calls.create({
-    callId: call_id,
-    fromNumber: from_number,
-    duration: duration_ms,
-    transcript,
-    completedAt: new Date(),
-  });
-
-  if (transcript) {
-    await extractActionItems(call_id, transcript);
-  }
-}
-
-async function handleCallAnalyzed(call: any) {
-  const { call_id, call_analysis } = call;
-  const { sentiment, summary } = call_analysis;
-
-  if (sentiment === "negative") {
-    await alerting.send({
-      channel: "#customer-escalations",
-      message: `Negative call: ${call_id}\nSummary: ${summary}`,
-    });
-  }
-
-  await crmClient.logActivity({
-    callId: call_id,
-    sentiment,
-    summary,
-  });
-}
-```
-
-### Step 4: Create Outbound Call via API
-```bash
-set -euo pipefail
-curl -X POST https://api.retellai.com/v2/create-phone-call \
-  -H "Authorization: Bearer $RETELL_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "from_number": "+11234567890",  # 11234567890 = configured value
-    "to_number": "+10987654321",  # 10987654321 = configured value
-    "agent_id": "agt_abc123",
-    "webhook_url": "https://api.yourapp.com/webhooks/retellai"
-  }'
-```
+### Step 4: Initiate Outbound Calls
+Use the Retell API to create phone calls with agent ID, from/to numbers, and a webhook URL for receiving events. See [webhook handlers](references/webhook-handlers.md) for the curl command.
 
 ## Error Handling
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| Invalid signature | Wrong webhook secret | Verify secret in Retell AI dashboard |
+| Invalid signature | Wrong webhook secret | Verify secret in Retell AI dashboard settings |
 | No transcript | Short call or error | Check `end_reason` for early termination |
-| Transfer failed | Invalid transfer number | Verify transfer number is active |
+| Transfer failed | Invalid transfer number | Verify transfer number is active and reachable |
 | Missing analysis | Analysis not configured | Enable post-call analysis in agent settings |
 
 ## Examples
 
-### Post-Call Action Items
-```typescript
-async function extractActionItems(callId: string, transcript: string) {
-  const items = await llm.extract(transcript, "action_items");
-  for (const item of items) {
-    await taskManager.createTask({
-      title: item,
-      source: `Call: ${callId}`,
-    });
-  }
-}
-```
+For signature verification, event routing, call processing, outbound API calls, and action item extraction, see [webhook handlers](references/webhook-handlers.md).
 
 ## Resources
 - [Retell AI API Documentation](https://docs.retellai.com)
 - [Retell AI Webhooks](https://docs.retellai.com/webhooks)
 
 ## Next Steps
-For deployment setup, see `retellai-deploy-integration`.
+For deployment of webhook endpoints to production platforms, see `retellai-deploy-integration`. For securing webhook secrets, see `retellai-security-basics`.
 
 ## Output
-
-- Configuration files or code changes applied to the project
-- Validation report confirming correct implementation
-- Summary of changes made and their rationale
+- Webhook endpoint deployed with signature verification
+- Event router handling all call lifecycle events
+- Call records stored with transcripts and sentiment analysis
+- Outbound call capability configured and tested

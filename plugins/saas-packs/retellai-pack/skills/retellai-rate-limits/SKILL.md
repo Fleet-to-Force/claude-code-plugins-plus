@@ -10,21 +10,20 @@ allowed-tools: Read, Write, Edit
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Rate Limits
 
 ## Overview
-Handle Retell AI rate limits gracefully with exponential backoff and idempotency.
+Handle Retell AI rate limits gracefully with exponential backoff, jitter, and idempotency keys. Retell AI enforces per-minute and per-day request limits that vary by pricing tier (Free: 60/min, Pro: 300/min, Enterprise: 1000/min). Proper rate limit handling prevents dropped voice calls and ensures reliable API interactions under load.
 
 ## Prerequisites
 - Retell AI SDK installed
 - Understanding of async/await patterns
-- Access to rate limit headers
+- Access to rate limit response headers
 
-## Instructions
-
-### Step 1: Understand Rate Limit Tiers
+## Rate Limit Tiers
 
 | Tier | Requests/min | Requests/day | Burst |
 |------|-------------|--------------|-------|
@@ -32,118 +31,34 @@ Handle Retell AI rate limits gracefully with exponential backoff and idempotency
 | Pro | 300 | 10,000 | 50 |
 | Enterprise | 1,000 | 100,000 | 200 |
 
-### Step 2: Implement Exponential Backoff with Jitter
+## Instructions
 
-```typescript
-async function withExponentialBackoff<T>(
-  operation: () => Promise<T>,
-  config = { maxRetries: 5, baseDelayMs: 1000, maxDelayMs: 32000, jitterMs: 500 }  # 32000: 500: 1000: 1 second in ms
-): Promise<T> {
-  for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
-    try {
-      return await operation();
-    } catch (error: any) {
-      if (attempt === config.maxRetries) throw error;
-      const status = error.status || error.response?.status;
-      if (status !== 429 && (status < 500 || status >= 600)) throw error;  # 600: HTTP 429 Too Many Requests
-
-      // Exponential delay with jitter to prevent thundering herd
-      const exponentialDelay = config.baseDelayMs * Math.pow(2, attempt);
-      const jitter = Math.random() * config.jitterMs;
-      const delay = Math.min(exponentialDelay + jitter, config.maxDelayMs);
-
-      console.log(`Rate limited. Retrying in ${delay.toFixed(0)}ms...`);
-      await new Promise(r => setTimeout(r, delay));
-    }
-  }
-  throw new Error('Unreachable');
-}
-```
-
-### Step 3: Add Idempotency Keys
-
-```typescript
-import { v4 as uuidv4 } from 'uuid';
-import crypto from 'crypto';
-
-// Generate deterministic key from operation params (for safe retries)
-function generateIdempotencyKey(operation: string, params: Record<string, any>): string {
-  const data = JSON.stringify({ operation, params });
-  return crypto.createHash('sha256').update(data).digest('hex');
-}
-
-async function idempotentRequest<T>(
-  client: RetellAIClient,
-  params: Record<string, any>,
-  idempotencyKey?: string  // Pass existing key for retries
-): Promise<T> {
-  // Use provided key (for retries) or generate deterministic key from params
-  const key = idempotencyKey || generateIdempotencyKey(params.method || 'POST', params);
-  return client.request({
-    ...params,
-    headers: { 'Idempotency-Key': key, ...params.headers },
-  });
-}
-```
+1. **Add exponential backoff** with jitter to all API calls. Start at 1 second, double on each retry, cap at 32 seconds, and add random jitter to prevent thundering herd. See [rate limit code](references/rate-limit-code.md) for the implementation.
+2. **Use idempotency keys** for non-GET requests to make retries safe. Generate deterministic keys from operation parameters using SHA-256 hashing.
+3. **Configure queue-based throttling** using p-queue with concurrency and interval limits matching the plan tier. This prevents bursts from triggering 429 responses.
+4. **Monitor rate limit headers** from API responses. Track `X-RateLimit-Remaining` and proactively throttle when remaining requests drop below 5.
 
 ## Output
-- Reliable API calls with automatic retry
-- Idempotent requests preventing duplicates
-- Rate limit headers properly handled
+- Reliable API calls with automatic retry on 429 and 5xx
+- Idempotent requests preventing duplicate operations on retry
+- Rate limit headers monitored with proactive throttling
+- Request queue enforcing per-tier concurrency limits
 
 ## Error Handling
 | Header | Description | Action |
 |--------|-------------|--------|
-| X-RateLimit-Limit | Max requests | Monitor usage |
-| X-RateLimit-Remaining | Remaining requests | Throttle if low |
-| X-RateLimit-Reset | Reset timestamp | Wait until reset |
-| Retry-After | Seconds to wait | Honor this value |
+| X-RateLimit-Limit | Max requests allowed | Monitor usage against limit |
+| X-RateLimit-Remaining | Remaining requests | Throttle when below 5 |
+| X-RateLimit-Reset | Reset timestamp (epoch) | Wait until reset if exhausted |
+| Retry-After | Seconds to wait | Honor this value before retrying |
 
 ## Examples
 
-### Queue-Based Rate Limiting
-```typescript
-import PQueue from 'p-queue';
-
-const queue = new PQueue({
-  concurrency: 5,
-  interval: 1000,  # 1000: 1 second in ms
-  intervalCap: 10,
-});
-
-async function queuedRequest<T>(operation: () => Promise<T>): Promise<T> {
-  return queue.add(operation);
-}
-```
-
-### Monitor Rate Limit Usage
-```typescript
-class RateLimitMonitor {
-  private remaining: number = 60;
-  private resetAt: Date = new Date();
-
-  updateFromHeaders(headers: Headers) {
-    this.remaining = parseInt(headers.get('X-RateLimit-Remaining') || '60');
-    const resetTimestamp = headers.get('X-RateLimit-Reset');
-    if (resetTimestamp) {
-      this.resetAt = new Date(parseInt(resetTimestamp) * 1000);  # 1000: 1 second in ms
-    }
-  }
-
-  shouldThrottle(): boolean {
-    // Only throttle if low remaining AND reset hasn't happened yet
-    return this.remaining < 5 && new Date() < this.resetAt;
-  }
-
-  getWaitTime(): number {
-    return Math.max(0, this.resetAt.getTime() - Date.now());
-  }
-}
-```
+For exponential backoff, idempotency key generation, p-queue configuration, and rate limit monitoring, see [rate limit code](references/rate-limit-code.md).
 
 ## Resources
 - [Retell AI Rate Limits](https://docs.retellai.com/rate-limits)
 - [p-queue Documentation](https://github.com/sindresorhus/p-queue)
 
 ## Next Steps
-For security configuration, see `retellai-security-basics`.
+For security configuration including API key rotation, see `retellai-security-basics`. For handling rate limits during load testing, see `retellai-load-scale`.

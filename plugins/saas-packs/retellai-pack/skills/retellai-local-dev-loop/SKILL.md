@@ -10,12 +10,13 @@ allowed-tools: Read, Write, Edit, Bash(npm:*), Bash(pnpm:*), Grep
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Local Dev Loop
 
 ## Overview
-Set up a fast, reproducible local development workflow for Retell AI.
+Set up a fast, reproducible local development workflow for Retell AI integrations. Covers project scaffolding with a `retellai/` module for client wrapper, configuration, and utilities, environment variable management with `.env.local` templates, hot reload using `tsx watch`, vitest test configuration with SDK mocking, and debug mode for verbose logging.
 
 ## Prerequisites
 - Completed `retellai-install-auth` setup
@@ -25,90 +26,29 @@ Set up a fast, reproducible local development workflow for Retell AI.
 
 ## Instructions
 
-### Step 1: Create Project Structure
-```
-my-retellai-project/
-├── src/
-│   ├── retellai/
-│   │   ├── client.ts       # Retell AI client wrapper
-│   │   ├── config.ts       # Configuration management
-│   │   └── utils.ts        # Helper functions
-│   └── index.ts
-├── tests/
-│   └── retellai.test.ts
-├── .env.local              # Local secrets (git-ignored)
-├── .env.example            # Template for team
-└── package.json
-```
-
-### Step 2: Configure Environment
-```bash
-set -euo pipefail
-# Copy environment template
-cp .env.example .env.local
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-### Step 3: Setup Hot Reload
-```json
-{
-  "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "test": "vitest",
-    "test:watch": "vitest --watch"
-  }
-}
-```
-
-### Step 4: Configure Testing
-```typescript
-import { describe, it, expect, vi } from 'vitest';
-import { RetellAIClient } from '../src/retellai/client';
-
-describe('Retell AI Client', () => {
-  it('should initialize with API key', () => {
-    const client = new RetellAIClient({ apiKey: 'test-key' });
-    expect(client).toBeDefined();
-  });
-});
-```
+1. **Create the project structure** with `src/retellai/` for client wrapper, config, and utilities. Add a `tests/` directory and `.env.local` for secrets. See [dev setup](references/dev-setup.md) for the full directory layout.
+2. **Configure the environment** by copying `.env.example` to `.env.local`, installing dependencies, and starting the dev server.
+3. **Set up hot reload** using `tsx watch` for the dev server and `vitest --watch` for tests. This gives sub-second feedback on code changes.
+4. **Configure testing** with vitest and SDK mocking. Use `vi.mock()` to replace the Retell AI SDK with controlled responses in unit tests. See [dev setup](references/dev-setup.md) for mock examples.
+5. **Use debug mode** with `DEBUG=RETELLAI=* npm run dev` for verbose logging of all SDK operations during development.
 
 ## Output
-- Working development environment with hot reload
-- Configured test suite with mocking
-- Environment variable management
-- Fast iteration cycle for Retell AI development
+- Working development environment with hot reload on file changes
+- Configured test suite with SDK mocking for offline testing
+- Environment variable management with `.env.local` template
+- Fast iteration cycle from code change to test result
 
 ## Error Handling
 | Error | Cause | Solution |
 |-------|-------|----------|
 | Module not found | Missing dependency | Run `npm install` |
-| Port in use | Another process | Kill process or change port |
+| Port in use | Another process on same port | Kill process or change port in config |
 | Env not loaded | Missing .env.local | Copy from .env.example |
-| Test timeout | Slow network | Increase test timeout |
+| Test timeout | Slow network or unmocked call | Increase test timeout or add mock |
 
 ## Examples
 
-### Mock Retell AI Responses
-```typescript
-vi.mock('@retellai/sdk', () => ({
-  RetellAIClient: vi.fn().mockImplementation(() => ({
-    // Mock methods here
-  })),
-}));
-```
-
-### Debug Mode
-```bash
-set -euo pipefail
-# Enable verbose logging
-DEBUG=RETELLAI=* npm run dev
-```
+For project structure, environment setup, hot reload config, vitest setup, SDK mocking, and debug mode, see [dev setup](references/dev-setup.md).
 
 ## Resources
 - [Retell AI SDK Reference](https://docs.retellai.com/sdk)
@@ -116,4 +56,4 @@ DEBUG=RETELLAI=* npm run dev
 - [tsx Documentation](https://github.com/esbuild-kit/tsx)
 
 ## Next Steps
-See `retellai-sdk-patterns` for production-ready code patterns.
+For production-ready code patterns, see `retellai-sdk-patterns`. For CI pipeline setup, see `retellai-ci-integration`.

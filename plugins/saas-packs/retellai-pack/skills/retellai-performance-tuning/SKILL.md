@@ -10,12 +10,13 @@ allowed-tools: Read, Write, Edit
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Performance Tuning
 
 ## Overview
-Optimize Retell AI voice agent latency and call quality. Focus on reducing voice-to-voice latency, LLM response time, WebSocket connection management, and agent configuration tuning for natural conversations.
+Optimize Retell AI voice agent latency and call quality for production deployments. Covers reducing voice-to-voice latency through agent configuration tuning (responsiveness, interruption sensitivity, voice speed), LLM prompt optimization for faster responses, WebSocket connection pooling for concurrent calls, and call analytics caching with LRU eviction.
 
 ## Prerequisites
 - Retell AI account with API key
@@ -26,146 +27,28 @@ Optimize Retell AI voice agent latency and call quality. Focus on reducing voice
 ## Instructions
 
 ### Step 1: Optimize Agent LLM Configuration
-```typescript
-import Retell from 'retell-sdk';
-
-const retell = new Retell({ apiKey: process.env.RETELL_API_KEY! });
-
-// Configure agent for low latency
-async function createOptimizedAgent() {
-  return retell.agent.create({
-    agent_name: 'fast-responder',
-    response_engine: {
-      type: 'retell-llm',
-      llm_id: process.env.RETELL_LLM_ID!,
-    },
-    voice_id: 'eleven_labs_rachel', // Pre-cached voice
-    language: 'en-US',
-    interruption_sensitivity: 0.8, // Higher = faster interrupt detection
-    ambient_sound: null,           // Disable for lower latency
-    responsiveness: 0.9,           // Higher = responds faster
-    voice_speed: 1.1,              // Slightly faster speech
-    voice_temperature: 0.3,        // Lower = more deterministic
-    enable_backchannel: true,      // "uh-huh" for natural flow
-    boosted_keywords: ['appointment', 'schedule', 'callback'],
-  });
-}
-```
+Configure the voice agent for low latency by increasing responsiveness (0.9), raising interruption sensitivity (0.8), using a pre-cached voice, disabling ambient sound, and boosting frequently-used keywords. See [optimization patterns](references/optimization-patterns.md) for the complete agent configuration.
 
 ### Step 2: Optimize LLM Prompt for Speed
-```typescript
-async function createOptimizedLLM() {
-  return retell.llm.create({
-    general_prompt: `You are a fast, helpful phone agent.
-Rules for speed:
-- Keep responses under 2 sentences
-- Never use filler words
-- Ask one question at a time
-- Confirm details immediately
-- Use short acknowledgments`,
-    begin_message: 'Hi, how can I help you today?',
-    model: 'gpt-4o-mini',     // Faster than gpt-4o
-    general_tools: [
-      {
-        type: 'end_call',
-        name: 'end_call',
-        description: 'End the call when conversation is complete',
-      },
-      {
-        type: 'custom',
-        name: 'book_appointment',
-        description: 'Book an appointment for the caller',
-        parameters: {
-          type: 'object',
-          properties: {
-            date: { type: 'string' },
-            time: { type: 'string' },
-            name: { type: 'string' },
-          },
-          required: ['date', 'time', 'name'],
-        },
-        url: process.env.BOOKING_WEBHOOK_URL!,
-      },
-    ],
-  });
-}
-```
+Keep the system prompt concise with explicit brevity rules: responses under 2 sentences, no filler words, one question at a time. Use `gpt-4o-mini` for faster inference than `gpt-4o`. Full prompt template in [optimization patterns](references/optimization-patterns.md).
 
-### Step 3: WebSocket Connection Pooling
-```typescript
-import WebSocket from 'ws';
+### Step 3: Implement WebSocket Connection Pooling
+Maintain a connection pool keyed by call ID to avoid reconnection overhead. Check `readyState` before reusing connections and clean up on close events. Implementation in [optimization patterns](references/optimization-patterns.md).
 
-const connectionPool: Map<string, WebSocket> = new Map();
-
-async function getWebSocketConnection(callId: string): Promise<WebSocket> {
-  const existing = connectionPool.get(callId);
-  if (existing?.readyState === WebSocket.OPEN) return existing;
-
-  const ws = new WebSocket(
-    `wss://api.retellai.com/audio-websocket/${callId}`,
-    { headers: { Authorization: `Bearer ${process.env.RETELL_API_KEY}` } }
-  );
-
-  return new Promise((resolve, reject) => {
-    ws.on('open', () => {
-      connectionPool.set(callId, ws);
-      resolve(ws);
-    });
-    ws.on('error', reject);
-    ws.on('close', () => connectionPool.delete(callId));
-  });
-}
-```
-
-### Step 4: Call Analytics Caching
-```typescript
-import { LRUCache } from 'lru-cache';
-
-const callCache = new LRUCache<string, any>({
-  max: 500,  # HTTP 500 Internal Server Error
-  ttl: 1000 * 60 * 15, // 15 min - completed calls don't change  # 1000: 1 second in ms
-});
-
-async function getCallDetails(callId: string) {
-  const cached = callCache.get(callId);
-  if (cached) return cached;
-
-  const call = await retell.call.retrieve(callId);
-  if (call.call_status === 'ended') {
-    callCache.set(callId, call); // Only cache completed calls
-  }
-  return call;
-}
-
-async function getCallMetrics(callIds: string[]) {
-  const calls = await Promise.all(callIds.map(getCallDetails));
-  return {
-    avgDuration: calls.reduce((s, c) => s + (c.end_timestamp - c.start_timestamp), 0) / calls.length,
-    avgLatency: calls.reduce((s, c) => s + (c.latency_p50 || 0), 0) / calls.length,
-    successRate: calls.filter(c => c.disconnection_reason === 'agent_goodbye').length / calls.length,
-  };
-}
-```
+### Step 4: Cache Call Analytics
+Use an LRU cache for completed call details since they are immutable after the call ends. Set a 15-minute TTL and only cache calls with status `ended`. This dramatically reduces API calls when building dashboards or reports.
 
 ## Error Handling
 | Issue | Cause | Solution |
 |-------|-------|----------|
 | High voice latency | Complex LLM prompt | Shorten prompt, use gpt-4o-mini |
-| WebSocket disconnect | Network instability | Implement reconnection logic |
+| WebSocket disconnect | Network instability | Implement reconnection with backoff |
 | Unnatural pauses | Low responsiveness setting | Increase responsiveness to 0.8+ |
-| Missed interrupts | Low sensitivity | Increase interruption_sensitivity |
+| Missed interrupts | Low sensitivity | Increase interruption_sensitivity to 0.7+ |
 
 ## Examples
 
-### Latency Monitoring
-```typescript
-retell.on('call_analyzed', (event) => {
-  const latency = event.call_analysis?.latency_p95;
-  if (latency && latency > 1500) {  # 1500 = configured value
-    console.warn(`High latency call ${event.call_id}: ${latency}ms p95`);
-  }
-});
-```
+For agent configuration, prompt templates, WebSocket pooling, LRU caching, and latency monitoring, see [optimization patterns](references/optimization-patterns.md).
 
 ## Resources
 - [Retell AI API Reference](https://docs.retellai.com/api-references)
@@ -173,7 +56,7 @@ retell.on('call_analyzed', (event) => {
 - [Voice Latency Optimization](https://docs.retellai.com/optimize-latency)
 
 ## Output
-
-- Configuration files or code changes applied to the project
-- Validation report confirming correct implementation
-- Summary of changes made and their rationale
+- Agent configured with optimized latency settings
+- LLM prompt tuned for sub-second responses
+- WebSocket connection pool deployed for concurrent calls
+- Call analytics caching reducing API load by 80%+

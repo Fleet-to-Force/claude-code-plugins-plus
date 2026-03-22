@@ -10,12 +10,13 @@ allowed-tools: Read, Write, Edit, Bash(aws:*), Bash(gcloud:*), Bash(vault:*)
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Multi-Environment Setup
 
 ## Overview
-Configure Retell AI across development, staging, and production environments with isolated API keys, environment-specific settings, and proper secret management. Each environment gets its own credentials and configuration to prevent cross-environment data leakage.
+Configure Retell AI across development, staging, and production environments with isolated API keys, environment-specific settings, and proper secret management. Each environment gets its own credentials and configuration to prevent cross-environment data leakage and ensure production hardening.
 
 ## Prerequisites
 - Separate Retell AI API keys per environment
@@ -33,136 +34,24 @@ Configure Retell AI across development, staging, and production environments wit
 
 ## Instructions
 
-### Step 1: Configuration Structure
-```
-config/
-  retellai/
-    base.ts           # Shared defaults
-    development.ts    # Dev overrides
-    staging.ts        # Staging overrides
-    production.ts     # Prod overrides
-    index.ts          # Environment resolver
-```
+### Step 1: Create Configuration Structure
+Set up a `config/retellai/` directory with base defaults and per-environment overrides. The base config defines shared settings like timeout and retry counts. See [environment configs](references/environment-configs.md) for the full TypeScript configuration structure.
 
-### Step 2: Base Configuration
-```typescript
-// config/retellai/base.ts
-export const baseConfig = {
-  timeout: 30000,  # 30000: 30 seconds in ms
-  maxRetries: 3,
-  cache: {
-    enabled: true,
-    ttlSeconds: 300,  # 300: timeout: 5 minutes
-  },
-};
-```
+### Step 2: Implement Environment Resolver
+Create an auto-detection function that determines the current environment from `NODE_ENV` or platform-specific variables (e.g., `VERCEL_ENV`). Throw an error at startup if the API key is missing for the detected environment.
 
-### Step 3: Environment-Specific Configs
-```typescript
-// config/retellai/development.ts
-import { baseConfig } from "./base";
+### Step 3: Configure Secrets Per Platform
+Store API keys using the appropriate mechanism for each environment: `.env.local` for development, GitHub Actions environment secrets for CI/CD, and AWS Secrets Manager or GCP Secret Manager for production. See [environment configs](references/environment-configs.md) for platform-specific commands.
 
-export const developmentConfig = {
-  ...baseConfig,
-  apiKey: process.env.RETELL_API_KEY_DEV,
-  debug: true,
-  cache: { enabled: false, ttlSeconds: 60 },
-};
-
-// config/retellai/staging.ts
-import { baseConfig } from "./base";
-
-export const stagingConfig = {
-  ...baseConfig,
-  apiKey: process.env.RETELL_API_KEY_STAGING,
-  debug: false,
-};
-
-// config/retellai/production.ts
-import { baseConfig } from "./base";
-
-export const productionConfig = {
-  ...baseConfig,
-  apiKey: process.env.RETELL_API_KEY_PROD,
-  debug: false,
-  timeout: 60000,  # 60000: 1 minute in ms
-  maxRetries: 5,
-  cache: { enabled: true, ttlSeconds: 600 },  # 600: timeout: 10 minutes
-};
-```
-
-### Step 4: Environment Resolver
-```typescript
-// config/retellai/index.ts
-import { developmentConfig } from "./development";
-import { stagingConfig } from "./staging";
-import { productionConfig } from "./production";
-
-type Environment = "development" | "staging" | "production";
-
-const configs = {
-  development: developmentConfig,
-  staging: stagingConfig,
-  production: productionConfig,
-};
-
-export function detectEnvironment(): Environment {
-  const env = process.env.NODE_ENV || "development";
-  if (env === "production") return "production";
-  if (env === "staging" || process.env.VERCEL_ENV === "preview") return "staging";
-  return "development";
-}
-
-export function getRetellAIConfig() {
-  const env = detectEnvironment();
-  const config = configs[env];
-
-  if (!config.apiKey) {
-    throw new Error(`RETELL_API_KEY not set for environment: ${env}`);
-  }
-
-  return { ...config, environment: env };
-}
-```
-
-### Step 5: Secret Management
-```bash
-# Local development (.env.local - git-ignored)
-RETELL_API_KEY_DEV=your-dev-key
-
-# GitHub Actions
-# Settings > Environments > staging/production > Secrets
-# Add RETELL_API_KEY_STAGING and RETELL_API_KEY_PROD
-
-# AWS Secrets Manager
-aws secretsmanager create-secret \
-  --name retellai/production/api-key \
-  --secret-string "your-prod-key"
-
-# GCP Secret Manager
-echo -n "your-prod-key" | gcloud secrets create retellai-api-key-prod --data-file=-
-```
-
-```yaml
-# .github/workflows/deploy.yml
-jobs:
-  deploy-staging:
-    environment: staging
-    env:
-      RETELL_API_KEY_STAGING: ${{ secrets.RETELL_API_KEY_STAGING }}
-
-  deploy-production:
-    environment: production
-    env:
-      RETELL_API_KEY_PROD: ${{ secrets.RETELL_API_KEY_PROD }}
-```
+### Step 4: Add Startup Validation
+Use Zod schema validation at application startup to catch missing or malformed configuration early, before the first API call fails. This prevents silent misconfigurations from reaching production.
 
 ## Error Handling
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| Wrong environment | Missing NODE_ENV | Set environment variable in deployment |
-| Secret not found | Wrong secret path | Verify secret manager configuration |
-| Cross-env data leak | Shared API key | Use separate keys per environment |
+| Wrong environment detected | Missing NODE_ENV | Set environment variable explicitly in deployment |
+| Secret not found | Wrong secret path | Verify secret manager configuration and IAM roles |
+| Cross-env data leak | Shared API key | Use separate keys per environment, audit regularly |
 | Config validation fail | Missing field | Add startup validation with Zod schema |
 
 ## Examples
@@ -174,28 +63,11 @@ console.log(`Running in ${config.environment}`);
 console.log(`Cache enabled: ${config.cache.enabled}`);
 ```
 
-### Startup Validation
-```typescript
-import { z } from "zod";
-
-const configSchema = z.object({
-  apiKey: z.string().min(1, "RETELL_API_KEY is required"),
-  environment: z.enum(["development", "staging", "production"]),
-  timeout: z.number().positive(),
-});
-
-const config = configSchema.parse(getRetellAIConfig());
-```
+For complete TypeScript configs, resolver code, CI/CD workflow YAML, and Zod validation, see [environment configs](references/environment-configs.md).
 
 ## Resources
 - [Retell AI Documentation](https://docs.retellai.com)
 - [Retell AI Agents](https://docs.retellai.com/agents)
 
 ## Next Steps
-For deployment, see `retellai-deploy-integration`.
-
-## Output
-
-- Configuration files or code changes applied to the project
-- Validation report confirming correct implementation
-- Summary of changes made and their rationale
+For deployment to specific platforms (Fly.io, Cloud Run), see `retellai-deploy-integration`. For security hardening of API keys, see `retellai-security-basics`.

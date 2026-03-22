@@ -10,12 +10,13 @@ allowed-tools: Read, Bash(kubectl:*), Bash(curl:*), Grep
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Production Checklist
 
 ## Overview
-Complete checklist for deploying Retell AI integrations to production.
+Complete checklist for deploying Retell AI integrations to production with gradual rollout and rollback procedures. Covers pre-deployment configuration verification, code quality gates, infrastructure readiness, documentation requirements, and a phased rollout strategy (canary 10% -> 50% -> 100%) with monitoring at each stage.
 
 ## Prerequisites
 - Staging environment tested and verified
@@ -25,65 +26,14 @@ Complete checklist for deploying Retell AI integrations to production.
 
 ## Instructions
 
-### Step 1: Pre-Deployment Configuration
-- [ ] Production API keys in secure vault
-- [ ] Environment variables set in deployment platform
-- [ ] API key scopes are minimal (least privilege)
-- [ ] Webhook endpoints configured with HTTPS
-- [ ] Webhook secrets stored securely
+1. **Verify pre-deployment configuration**: Production API keys in secure vault, environment variables set, API key scopes minimized (least privilege), webhook endpoints configured with HTTPS, webhook secrets stored securely.
+2. **Run code quality checks**: All tests passing (`npm test`), no hardcoded credentials, error handling covers all Retell AI error types, rate limiting/backoff implemented, logging is production-appropriate.
+3. **Confirm infrastructure setup**: Health check endpoint includes Retell AI connectivity, monitoring/alerting configured, circuit breaker pattern implemented, graceful degradation configured for Retell AI outages.
+4. **Complete documentation**: Incident runbook created, key rotation procedure documented, rollback procedure documented, on-call escalation path defined.
+5. **Execute gradual rollout** starting with canary (10%), monitoring for 10 minutes, then 50%, then 100%. See [deployment steps](references/deployment-steps.md) for kubectl commands and health check implementation.
 
-### Step 2: Code Quality Verification
-- [ ] All tests passing (`npm test`)
-- [ ] No hardcoded credentials
-- [ ] Error handling covers all Retell AI error types
-- [ ] Rate limiting/backoff implemented
-- [ ] Logging is production-appropriate
+## Alerting Thresholds
 
-### Step 3: Infrastructure Setup
-- [ ] Health check endpoint includes Retell AI connectivity
-- [ ] Monitoring/alerting configured
-- [ ] Circuit breaker pattern implemented
-- [ ] Graceful degradation configured
-
-### Step 4: Documentation Requirements
-- [ ] Incident runbook created
-- [ ] Key rotation procedure documented
-- [ ] Rollback procedure documented
-- [ ] On-call escalation path defined
-
-### Step 5: Deploy with Gradual Rollout
-```bash
-set -euo pipefail
-# Pre-flight checks
-curl -f https://staging.example.com/health
-curl -s https://status.retellai.com
-
-# Gradual rollout - start with canary (10%)
-kubectl apply -f k8s/production.yaml
-kubectl set image deployment/retellai-integration app=image:new --record
-kubectl rollout pause deployment/retellai-integration
-
-# Monitor canary traffic for 10 minutes
-sleep 600  # 600: timeout: 10 minutes
-# Check error rates and latency before continuing
-
-# If healthy, continue rollout to 50%
-kubectl rollout resume deployment/retellai-integration
-kubectl rollout pause deployment/retellai-integration
-sleep 300  # 300: timeout: 5 minutes
-
-# Complete rollout to 100%
-kubectl rollout resume deployment/retellai-integration
-kubectl rollout status deployment/retellai-integration
-```
-
-## Output
-- Deployed Retell AI integration
-- Health checks passing
-- Monitoring active
-- Rollback procedure documented
-
-## Error Handling
 | Alert | Condition | Severity |
 |-------|-----------|----------|
 | API Down | 5xx errors > 10/min | P1 |
@@ -91,26 +41,21 @@ kubectl rollout status deployment/retellai-integration
 | Rate Limited | 429 errors > 5/min | P2 |
 | Auth Failures | 401/403 errors > 0 | P1 |
 
+## Output
+- Deployed Retell AI integration with verified health checks
+- Monitoring active with alerting thresholds configured
+- Rollback procedure tested and documented
+- Gradual rollout completed at 100%
+
+## Error Handling
+For rollback procedure, health check implementation, and gradual rollout commands, see [deployment steps](references/deployment-steps.md).
+
 ## Examples
 
-### Health Check Implementation
-```typescript
-async function healthCheck(): Promise<{ status: string; retellai: any }> {
-  const start = Date.now();
-  try {
-    await retellaiClient.ping();
-    return { status: 'healthy', retellai: { connected: true, latencyMs: Date.now() - start } };
-  } catch (error) {
-    return { status: 'degraded', retellai: { connected: false, latencyMs: Date.now() - start } };
-  }
-}
-```
-
-### Immediate Rollback
+### Quick Health Verification
 ```bash
 set -euo pipefail
-kubectl rollout undo deployment/retellai-integration
-kubectl rollout status deployment/retellai-integration
+curl -sf https://api.yourapp.com/health | jq '.services.retellai'
 ```
 
 ## Resources
@@ -118,4 +63,4 @@ kubectl rollout status deployment/retellai-integration
 - [Retell AI Support](https://docs.retellai.com/support)
 
 ## Next Steps
-For version upgrades, see `retellai-upgrade-migration`.
+For version upgrades after production deployment, see `retellai-upgrade-migration`. For monitoring setup, see `retellai-observability`.

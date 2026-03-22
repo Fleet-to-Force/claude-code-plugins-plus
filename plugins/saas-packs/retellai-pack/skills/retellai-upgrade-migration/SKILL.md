@@ -10,7 +10,8 @@ allowed-tools: Read, Write, Edit, Bash(npm:*), Bash(git:*)
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Upgrade & Migration
 
@@ -19,44 +20,27 @@ compatible-with: claude-code, codex, openclaw
 !`pip freeze 2>/dev/null | head -20`
 
 ## Overview
-Guide for upgrading Retell AI SDK versions and handling breaking changes.
+Guide for upgrading Retell AI SDK versions and handling breaking changes safely. Covers version checking, changelog review, upgrade branch creation, breaking change remediation (import paths, configuration objects, method signatures), deprecation monitoring in development mode, and rollback procedures with pinned versions.
 
 ## Prerequisites
 - Current Retell AI SDK installed
 - Git for version control
 - Test suite available
-- Staging environment
+- Staging environment for validation
 
 ## Instructions
 
-### Step 1: Check Current Version
-```bash
-set -euo pipefail
-npm list @retellai/sdk
-npm view @retellai/sdk version
-```
-
-### Step 2: Review Changelog
-```bash
-open https://github.com/retellai/sdk/releases
-```
-
-### Step 3: Create Upgrade Branch
-```bash
-set -euo pipefail
-git checkout -b upgrade/retellai-sdk-vX.Y.Z
-npm install @retellai/sdk@latest
-npm test
-```
-
-### Step 4: Handle Breaking Changes
-Update import statements, configuration, and method signatures as needed.
+1. **Check the current version** with `npm list @retellai/sdk` and compare against the latest release with `npm view @retellai/sdk version`.
+2. **Review the changelog** for breaking changes between the current and target versions. Pay attention to renamed imports, changed configuration objects, and removed features.
+3. **Create an upgrade branch** with `git checkout -b upgrade/retellai-sdk-vX.Y.Z`, install the new version, and run the test suite to identify failures.
+4. **Fix breaking changes** following the patterns in [upgrade guide](references/upgrade-guide.md): import path changes (v1 `Client` -> v2 `RetellAIClient`), configuration object changes (`key` -> `apiKey`), and method signature updates.
+5. **Add deprecation monitoring** in development mode to catch warnings about soon-to-be-removed features proactively. See [upgrade guide](references/upgrade-guide.md) for the monitoring code.
 
 ## Output
-- Updated SDK version
-- Fixed breaking changes
-- Passing test suite
-- Documented rollback procedure
+- Updated SDK version installed and tested
+- Breaking changes identified and fixed
+- Test suite passing on the upgrade branch
+- Rollback procedure documented with pinned version
 
 ## Error Handling
 | SDK Version | API Version | Node.js | Breaking Changes |
@@ -67,53 +51,11 @@ Update import statements, configuration, and method signatures as needed.
 
 ## Examples
 
-### Import Changes
-```typescript
-// Before (v1.x)
-import { Client } from '@retellai/sdk';
-
-// After (v2.x)
-import { RetellAIClient } from '@retellai/sdk';
-```
-
-### Configuration Changes
-```typescript
-// Before (v1.x)
-const client = new Client({ key: 'xxx' });
-
-// After (v2.x)
-const client = new RetellAIClient({
-  apiKey: 'xxx',
-});
-```
-
-### Rollback Procedure
-```bash
-set -euo pipefail
-npm install @retellai/sdk@1.x.x --save-exact
-```
-
-### Deprecation Handling
-```typescript
-// Monitor for deprecation warnings in development
-if (process.env.NODE_ENV === 'development') {
-  process.on('warning', (warning) => {
-    if (warning.name === 'DeprecationWarning') {
-      console.warn('[Retell AI]', warning.message);
-      // Log to tracking system for proactive updates
-    }
-  });
-}
-
-// Common deprecation patterns to watch for:
-// - Renamed methods: client.oldMethod() -> client.newMethod()
-// - Changed parameters: { key: 'x' } -> { apiKey: 'x' }
-// - Removed features: Check release notes before upgrading
-```
+For import changes, configuration changes, rollback procedure, and deprecation monitoring, see [upgrade guide](references/upgrade-guide.md).
 
 ## Resources
 - [Retell AI Changelog](https://github.com/retellai/sdk/releases)
 - [Retell AI Migration Guide](https://docs.retellai.com/migration)
 
 ## Next Steps
-For CI integration during upgrades, see `retellai-ci-integration`.
+For CI integration during upgrades, see `retellai-ci-integration`. For production deployment after successful upgrade, see `retellai-prod-checklist`.

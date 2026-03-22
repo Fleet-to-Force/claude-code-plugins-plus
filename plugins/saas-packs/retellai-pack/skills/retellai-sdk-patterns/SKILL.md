@@ -10,12 +10,13 @@ allowed-tools: Read, Write, Edit
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI SDK Patterns
 
 ## Overview
-Production-ready patterns for Retell AI SDK usage in TypeScript and Python.
+Production-ready patterns for Retell AI SDK usage in TypeScript and Python. Covers client lifecycle management (singleton and factory patterns), structured error handling with typed exceptions, automatic retry with exponential backoff, multi-tenant client isolation, and runtime response validation using Zod schemas.
 
 ## Prerequisites
 - Completed `retellai-install-auth` setup
@@ -24,119 +25,28 @@ Production-ready patterns for Retell AI SDK usage in TypeScript and Python.
 
 ## Instructions
 
-### Step 1: Implement Singleton Pattern (Recommended)
-```typescript
-// src/retellai/client.ts
-import { RetellAIClient } from '@retellai/sdk';
-
-let instance: RetellAIClient | null = null;
-
-export function getRetell AIClient(): RetellAIClient {
-  if (!instance) {
-    instance = new RetellAIClient({
-      apiKey: process.env.RETELLAI_API_KEY!,
-      // Additional options
-    });
-  }
-  return instance;
-}
-```
-
-### Step 2: Add Error Handling Wrapper
-```typescript
-import { Retell AIError } from '@retellai/sdk';
-
-async function safeRetell AICall<T>(
-  operation: () => Promise<T>
-): Promise<{ data: T | null; error: Error | null }> {
-  try {
-    const data = await operation();
-    return { data, error: null };
-  } catch (err) {
-    if (err instanceof Retell AIError) {
-      console.error({
-        code: err.code,
-        message: err.message,
-      });
-    }
-    return { data: null, error: err as Error };
-  }
-}
-```
-
-### Step 3: Implement Retry Logic
-```typescript
-async function withRetry<T>(
-  operation: () => Promise<T>,
-  maxRetries = 3,
-  backoffMs = 1000  # 1000: 1 second in ms
-): Promise<T> {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await operation();
-    } catch (err) {
-      if (attempt === maxRetries) throw err;
-      const delay = backoffMs * Math.pow(2, attempt - 1);
-      await new Promise(r => setTimeout(r, delay));
-    }
-  }
-  throw new Error('Unreachable');
-}
-```
+1. **Create a singleton client** to avoid redundant connections and ensure consistent configuration. Use lazy initialization with a module-level variable. See [code patterns](references/code-patterns.md).
+2. **Add error handling wrappers** that catch `RetellAIError` specifically, extract error codes for structured logging, and return result tuples instead of throwing.
+3. **Configure retry logic** with exponential backoff starting at 1 second and capping at 32 seconds. Only retry on 429 and 5xx status codes.
+4. **Validate API responses** at runtime using Zod schemas to catch breaking changes early. This is especially important during SDK upgrades.
 
 ## Output
-- Type-safe client singleton
+- Type-safe client singleton with lazy initialization
 - Robust error handling with structured logging
-- Automatic retry with exponential backoff
-- Runtime validation for API responses
+- Automatic retry with exponential backoff for transient failures
+- Runtime validation for API responses using Zod
 
 ## Error Handling
 | Pattern | Use Case | Benefit |
 |---------|----------|---------|
 | Safe wrapper | All API calls | Prevents uncaught exceptions |
 | Retry logic | Transient failures | Improves reliability |
-| Type guards | Response validation | Catches API changes |
+| Type guards | Response validation | Catches API changes early |
 | Logging | All operations | Debugging and monitoring |
 
 ## Examples
 
-### Factory Pattern (Multi-tenant)
-```typescript
-const clients = new Map<string, RetellAIClient>();
-
-export function getClientForTenant(tenantId: string): RetellAIClient {
-  if (!clients.has(tenantId)) {
-    const apiKey = getTenantApiKey(tenantId);
-    clients.set(tenantId, new RetellAIClient({ apiKey }));
-  }
-  return clients.get(tenantId)!;
-}
-```
-
-### Python Context Manager
-```python
-from contextlib import asynccontextmanager
-from retellai import RetellAIClient
-
-@asynccontextmanager
-async def get_retellai_client():
-    client = RetellAIClient()
-    try:
-        yield client
-    finally:
-        await client.close()
-```
-
-### Zod Validation
-```typescript
-import { z } from 'zod';
-
-const retellaiResponseSchema = z.object({
-  id: z.string(),
-  status: z.enum(['active', 'inactive']),
-  createdAt: z.string().datetime(),
-});
-```
+For singleton, factory, retry, Python context manager, and Zod validation patterns, see [code patterns](references/code-patterns.md).
 
 ## Resources
 - [Retell AI SDK Reference](https://docs.retellai.com/sdk)
@@ -144,4 +54,4 @@ const retellaiResponseSchema = z.object({
 - [Zod Documentation](https://zod.dev/)
 
 ## Next Steps
-Apply patterns in `retellai-core-workflow-a` for real-world usage.
+Apply these patterns in `retellai-core-workflow-a` for real-world usage. For multi-tenant client isolation, see the factory pattern in [code patterns](references/code-patterns.md).

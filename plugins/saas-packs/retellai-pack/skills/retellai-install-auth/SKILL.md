@@ -10,12 +10,13 @@ allowed-tools: Read, Write, Edit, Bash(npm:*), Bash(pip:*), Grep
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Install & Auth
 
 ## Overview
-Set up Retell AI SDK/CLI and configure authentication credentials.
+Set up Retell AI SDK/CLI and configure authentication credentials for voice agent development. Supports both Node.js (npm) and Python (pip) installation paths with environment variable-based authentication.
 
 ## Prerequisites
 - Node.js 18+ or Python 3.10+
@@ -88,4 +89,4 @@ client = RetellAIClient(
 - [Retell AI Status](https://status.retellai.com)
 
 ## Next Steps
-After successful auth, proceed to `retellai-hello-world` for your first API call.
+After successful auth, proceed to `retellai-hello-world` for a first API call. For local development workflow setup, see `retellai-local-dev-loop`.

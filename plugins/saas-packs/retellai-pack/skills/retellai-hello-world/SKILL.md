@@ -10,12 +10,13 @@ allowed-tools: Read, Write, Edit
 version: 1.0.0
 license: MIT
 author: Jeremy Longshore <jeremy@intentsolutions.io>
-compatible-with: claude-code, codex, openclaw
+compatible-with: claude-code
+tags: [retellai, voice-ai, saas]
 ---
 # Retell AI Hello World
 
 ## Overview
-Minimal working example demonstrating core Retell AI functionality.
+Minimal working example demonstrating core Retell AI functionality. Covers client initialization with API key authentication, a first API call pattern, and error handling setup for both TypeScript and Python.
 
 ## Prerequisites
 - Completed `retellai-install-auth` setup
