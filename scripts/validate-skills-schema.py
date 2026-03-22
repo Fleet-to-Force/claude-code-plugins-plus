@@ -156,13 +156,17 @@ AGENT_PLUGIN_RESTRICTED = {'hooks', 'mcpServers', 'permissionMode'}
 
 # Fields that are NOT in Anthropic spec — ERROR if found
 INVALID_AGENT_FIELDS = {
-    'capabilities': 'Non-standard field. Not in Anthropic spec. Remove.',
-    'expertise_level': 'Non-standard field. Not in Anthropic spec. Remove.',
-    'activation_priority': 'Non-standard field. Not in Anthropic spec. Remove.',
     'color': 'Non-standard field. Not in Anthropic spec. Remove.',
     'activation_triggers': 'Non-standard field. Not in Anthropic spec. Remove.',
     'type': 'Non-standard field. Not in Anthropic spec. Remove.',
     'category': 'Non-standard field. Not in Anthropic spec. Remove.',
+}
+
+# Non-standard fields widely used across existing agents — WARN (migrate in batch later)
+DEPRECATED_AGENT_FIELDS = {
+    'capabilities': 'Non-standard field. Not in Anthropic spec. Will be removed in future validation.',
+    'expertise_level': 'Non-standard field. Not in Anthropic spec. Will be removed in future validation.',
+    'activation_priority': 'Non-standard field. Not in Anthropic spec. Will be removed in future validation.',
 }
 
 INVALID_SKILL_FIELDS = {
@@ -957,6 +961,8 @@ def validate_agent(path: Path) -> Dict[str, Any]:
 
         elif field_name in INVALID_AGENT_FIELDS:
             errors.append(f"[agent] Invalid field '{field_name}': {INVALID_AGENT_FIELDS[field_name]}")
+        elif field_name in DEPRECATED_AGENT_FIELDS:
+            warnings.append(f"[agent] Deprecated field '{field_name}': {DEPRECATED_AGENT_FIELDS[field_name]}")
         else:
             warnings.append(f"[agent] Unknown field: '{field_name}'")
 
