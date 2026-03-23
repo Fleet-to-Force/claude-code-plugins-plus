@@ -13,6 +13,8 @@ compatible-with: claude-code
 
 # Navan Production Checklist
 
+## Overview
+
 Gated production readiness verification for Navan REST API integrations. Navan has no SDK and no sandbox — production is the only environment, making this checklist critical.
 
 ## Prerequisites
@@ -112,7 +114,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 - [ ] **Data classification**: Navan data (PII, payment info) classified and handled per PCI DSS L1
 - [ ] **Compliance certifications verified**: Confirm Navan's SOC 1/2 Type II, ISO 27001, PCI DSS L1, GDPR status at [navan.com/security](https://navan.com/security)
 
-## Expected Output
+## Output
 
 A completed checklist with:
 - Pass/fail status for each domain

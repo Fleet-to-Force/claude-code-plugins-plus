@@ -258,11 +258,11 @@ A complete environment isolation strategy for Navan integrations: separate OAuth
 ## Error Handling
 | Error | Code | Solution |
 |-------|------|----------|
-| Missing env vars | N/A | Config loader throws on startup; check the correct `.env.{env}` file exists |
+| Missing env vars | N/A | Config loader throws on startup; check the correct `.env.<environment>` file exists |
 | Write blocked in read-only | 403 | Expected in dev mode; switch to staging/prod for write operations |
 | Mock endpoint not found | 501 | Add the endpoint to mock server; check test expectations match mock data |
 | Proxy connection refused | 502 | Ensure the proxy server is running; check port availability |
-| Wrong environment loaded | N/A | Verify NODE_ENV matches the intended `.env.{env}` file |
+| Wrong environment loaded | N/A | Verify NODE_ENV matches the intended `.env.<environment>` file |
 
 ## Examples
 

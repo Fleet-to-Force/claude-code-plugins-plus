@@ -13,6 +13,8 @@ compatible-with: claude-code
 
 # Navan Upgrade Migration
 
+## Overview
+
 Defensive patterns for maintaining Navan API integrations over time. Navan does not publicly version their API, publish a changelog, or guarantee backward compatibility. Every API response should be treated as potentially different from the last.
 
 ## Prerequisites
@@ -196,7 +198,7 @@ When a schema change is detected:
 | Endpoint URL changed | Critical | Update client config, monitor old URL for redirect |
 | Auth flow changed | Critical | Immediate attention — test `/authenticate` and `/reauthenticate` |
 
-## Expected Output
+## Output
 
 - Baseline schema snapshots stored in version control
 - Drift detection script running on a schedule (cron or CI)

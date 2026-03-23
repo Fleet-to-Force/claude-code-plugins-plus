@@ -13,6 +13,8 @@ compatible-with: claude-code
 
 # Navan Migration Deep Dive
 
+## Overview
+
 End-to-end migration playbook for moving from SAP Concur or legacy travel management systems to Navan. Navan uses REST APIs with OAuth 2.0 — there is no SDK, no automated migration tool, and no sandbox for testing.
 
 ## Prerequisites
@@ -141,7 +143,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 - Maintain source system in read-only mode for 90 days (historical reference)
 - Decommission source system after retention period
 
-## Expected Output
+## Output
 
 - Migration project plan with phase timelines and owners
 - Data mapping document (source fields to Navan structure)

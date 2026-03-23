@@ -13,6 +13,8 @@ compatible-with: claude-code
 
 # Navan Debug Bundle
 
+## Overview
+
 Collect diagnostic data from Navan REST API integrations into a structured, shareable debug bundle. Navan has no SDK — all debugging uses raw HTTP requests against their OAuth 2.0 REST endpoints.
 
 ## Prerequisites
@@ -99,7 +101,7 @@ tar -czf "${BUNDLE_DIR}.tar.gz" "$BUNDLE_DIR"
 echo "Debug bundle ready: ${BUNDLE_DIR}.tar.gz ($(du -h "${BUNDLE_DIR}.tar.gz" | cut -f1))"
 ```
 
-## Expected Output
+## Output
 
 A compressed tarball containing:
 

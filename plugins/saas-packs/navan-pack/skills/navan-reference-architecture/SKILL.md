@@ -13,6 +13,8 @@ compatible-with: claude-code
 
 # Navan Reference Architecture
 
+## Overview
+
 Production-grade architecture for Navan API integrations. Navan provides raw REST endpoints with OAuth 2.0 — no SDK, no webhooks, no sandbox. This architecture handles those constraints with five purpose-built layers.
 
 ## Prerequisites
@@ -152,7 +154,7 @@ Navan has no push/webhook mechanism — all data sync is poll-based.
 | Data sync staleness | BOOKING > 8 days old | Slack |
 | Rate limit proximity | > 80% utilization | Slack |
 
-## Expected Output
+## Output
 
 - Architecture diagram adapted to your cloud provider and tooling
 - Component specifications for each of the five layers

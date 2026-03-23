@@ -13,6 +13,8 @@ compatible-with: claude-code
 
 # Navan Incident Runbook
 
+## Overview
+
 Structured incident response for Navan travel platform disruptions. Navan uses raw REST APIs with OAuth 2.0 — there is no SDK and no sandbox. All diagnostic commands run against production.
 
 ## Prerequisites
@@ -117,7 +119,7 @@ cat > "incident-$(date +%Y%m%d-%H%M%S).md" <<'INCEOF'
 INCEOF
 ```
 
-## Expected Output
+## Output
 
 - Severity classification for the incident
 - API health check results confirming platform vs local issue
