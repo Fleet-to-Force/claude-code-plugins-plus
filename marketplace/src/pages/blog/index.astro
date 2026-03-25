@@ -6,7 +6,7 @@ const posts = (await getCollection('blog-posts')).sort(
   (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
 );
 
-const title = "Blog — Tons of Skills";
+const title = "Work Diary — Tons of Skills";
 const description = "Technical deep-dives, AI development patterns, and lessons from shipping Claude Code plugins at scale.";
 ---
 
@@ -15,7 +15,7 @@ const description = "Technical deep-dives, AI development patterns, and lessons 
     <script type="application/ld+json" set:html={JSON.stringify({
       "@context": "https://schema.org",
       "@type": "Blog",
-      "name": "Tons of Skills Blog",
+      "name": "Tons of Skills Work Diary",
       "description": description,
       "url": "https://tonsofskills.com/blog",
       "publisher": {
@@ -35,7 +35,7 @@ const description = "Technical deep-dives, AI development patterns, and lessons 
 
   <section class="blog-hero">
     <div class="blog-hero-inner">
-      <p class="eyebrow">Blog</p>
+      <p class="eyebrow">Work Diary</p>
       <h1>From the Build Log</h1>
       <p class="hero-desc">Technical deep-dives, AI development patterns, and lessons from shipping Claude Code plugins at scale.</p>
     </div>
