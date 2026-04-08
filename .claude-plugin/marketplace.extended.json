@@ -11251,6 +11251,35 @@
         "skills": 6,
         "agents": 0
       }
+    },
+    {
+      "name": "hyperfocus",
+      "source": "./plugins/productivity/hyperfocus",
+      "description": "ADHD-friendly output formatting for Claude Code. Restructures responses with evidence-based cognitive accessibility: chunking, visual hierarchy, front-loaded key points, and progressive disclosure.",
+      "version": "0.1.0",
+      "category": "productivity",
+      "author": {
+        "name": "Nestor Magalhaes",
+        "email": "nestor.magalhaes@appex.world"
+      },
+      "keywords": [
+        "accessibility",
+        "adhd",
+        "neurodivergent",
+        "formatting",
+        "readability",
+        "productivity",
+        "cognitive-accessibility"
+      ],
+      "repository": "https://github.com/nextor2k/hyperfocus",
+      "homepage": "https://github.com/nextor2k/hyperfocus",
+      "license": "MIT",
+      "featured": false,
+      "pricing": "free",
+      "components": {
+        "skills": 1,
+        "agents": 0
+      }
     }
   ]
 }
